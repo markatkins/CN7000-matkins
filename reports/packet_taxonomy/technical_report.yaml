@@ -1,0 +1,203 @@
+title: "PMR Packet Taxonomy: Technical Report Index"
+subtitle: "CN7000 Protocol Datamodel Documentation"
+
+presenter:
+  name: "Packet Taxonomy Team"
+  info: "Cornelis Networks Engineering"
+
+sections:
+  - type: section_header
+    title: "Overview"
+    subtitle: "Protocol Datamodel Coverage"
+
+  - type: status_summary
+    title: "Datamodel Statistics"
+    subtitle: "174 KSY Files Across 5 Protocol Families"
+    open_count: 0
+    closed_count: 174
+    notes: "Complete coverage of all protocol formats in datamodel/protocols/"
+
+  - type: table
+    title: "Protocol Family Summary"
+    headers: ["Protocol", "KSY Files", "State Machines", "Report"]
+    rows:
+      - ["Ultra Ethernet (UE)", "103", "38", "technical_report_ue.pptx"]
+      - ["UALink (Reference)", "38", "11", "technical_report_ualink.pptx"]
+      - ["Ethernet", "12", "0", "technical_report_ethernet.pptx"]
+      - ["Cornelis", "12", "1", "technical_report_cornelis.pptx"]
+      - ["RoCE", "9", "1", "technical_report_roce.pptx"]
+      - ["TOTAL", "174", "51", "-"]
+
+  - type: section_header
+    title: "Ultra Ethernet (UE)"
+    subtitle: "103 KSY Files - UE Specification v1.0.1"
+
+  - type: table
+    title: "UE Layer Coverage"
+    headers: ["Layer", "Sublayer", "Formats", "Protocols", "Total"]
+    rows:
+      - ["Transport", "PDS (Packet Delivery)", "14", "16", "30"]
+      - ["Transport", "SES (Semantic)", "15", "12", "27"]
+      - ["Transport", "CMS (Congestion)", "7", "8", "15"]
+      - ["Transport", "TSS (Security)", "2", "7", "9"]
+      - ["Link", "LLR (Reliability)", "6", "3", "9"]
+      - ["Link", "LLDP (Discovery)", "2", "1", "3"]
+      - ["Link", "CBFC (Flow Control)", "2", "3", "5"]
+      - ["Network", "-", "4", "0", "4"]
+      - ["Physical", "-", "1", "0", "1"]
+      - ["TOTAL", "-", "53", "50", "103"]
+
+  - type: section_header
+    title: "UALink (Reference Only)"
+    subtitle: "38 KSY Files - UALink 200 Specification v1.0"
+
+  - type: table
+    title: "UALink Layer Coverage"
+    headers: ["Layer", "Formats", "Protocols", "Total"]
+    rows:
+      - ["UPLI (Upper Protocol)", "6", "2", "8"]
+      - ["Transaction", "7", "2", "9"]
+      - ["Data Link", "8", "4", "12"]
+      - ["Physical", "3", "1", "4"]
+      - ["Security", "3", "2", "5"]
+      - ["TOTAL", "27", "11", "38"]
+
+  - type: item_list
+    title: "UALink Note"
+    items:
+      - "UALink is REFERENCE ONLY - NOT supported by PMR"
+      - "Included for protocol comparison and future reference"
+      - "Datamodel maintained for specification traceability"
+    item_type: "closed"
+
+  - type: section_header
+    title: "Ethernet"
+    subtitle: "12 KSY Files - IEEE 802.3 and IP Standards"
+
+  - type: table
+    title: "Ethernet Layer Coverage"
+    headers: ["Layer", "Files", "Standards"]
+    rows:
+      - ["Link", "5", "IEEE 802.3, 802.1Q, 802.2"]
+      - ["Network", "2", "RFC 791 (IPv4), RFC 8200 (IPv6)"]
+      - ["Transport", "2", "RFC 793 (TCP), RFC 768 (UDP)"]
+      - ["RSS", "3", "Toeplitz hash, PMR CSR mapping"]
+      - ["TOTAL", "12", "-"]
+
+  - type: section_header
+    title: "Cornelis Proprietary"
+    subtitle: "12 KSY Files - UE+ Extensions"
+
+  - type: table
+    title: "Cornelis Coverage"
+    headers: ["Category", "Files", "Description"]
+    rows:
+      - ["Link", "2", "UE+ header, L2 prefix"]
+      - ["Network", "4", "UFH-16+, UFH-32+, collective_l2, scaleup_l2"]
+      - ["Transport", "2", "CSIG+ telemetry, partition key"]
+      - ["Config", "2", "Address vector, peer capability"]
+      - ["Protocols", "1", "L2 header selection state machine"]
+      - ["Encapsulation", "1", "VxLAN+"]
+      - ["TOTAL", "12", "-"]
+
+  - type: section_header
+    title: "RoCEv2"
+    subtitle: "9 KSY Files - InfiniBand Architecture v1.4"
+
+  - type: table
+    title: "RoCE Coverage"
+    headers: ["Category", "Files", "Headers"]
+    rows:
+      - ["Transport", "8", "BTH, RETH, AETH, DETH, IMMDT, AtomicETH, AtomicAckETH, ICRC"]
+      - ["Protocols", "1", "QP state machine"]
+      - ["TOTAL", "9", "-"]
+
+  - type: item_list
+    title: "PMR RoCE Support"
+    items:
+      - "Transport types: RC, UC, RD, UD, CNP (ECN)"
+      - "NOT supported: XRC (no shared receive queues)"
+      - "Extended atomics implemented over UE/UE+ instead"
+    item_type: "closed"
+
+  - type: section_header
+    title: "State Machines"
+    subtitle: "51 Protocol State Machines in protocols/ Subdirectories"
+
+  - type: table
+    title: "State Machine Distribution"
+    headers: ["Protocol", "Layer", "Count", "Examples"]
+    rows:
+      - ["UE", "PDS", "16", "pdc_establishment, loss_detection_*, rud_delivery"]
+      - ["UE", "CMS", "8", "ccc_state_machine, nscc_source, multipath_selection"]
+      - ["UE", "TSS", "7", "join_secure_domain, kdf_*, key_rotation"]
+      - ["UE", "LLR", "3", "llr_transmit_sm, llr_receive, ack_nack_transmit_sm"]
+      - ["UE", "CBFC", "3", "vc_state_machine, lossless_vc_init/removal"]
+      - ["UE", "LLDP", "1", "link_negotiation_sm"]
+      - ["UALink", "Various", "11", "link_training, key_derivation, flow_control"]
+      - ["Cornelis", "Protocols", "1", "l2_header_selection_sm"]
+      - ["RoCE", "Protocols", "1", "qp_state_machine"]
+      - ["TOTAL", "-", "51", "-"]
+
+  - type: section_header
+    title: "Cross-Protocol Comparison"
+    subtitle: "Header Overhead and Efficiency"
+
+  - type: table
+    title: "Header Overhead Comparison"
+    headers: ["Protocol", "Min Overhead", "Max Overhead", "4KB Efficiency"]
+    rows:
+      - ["UE+ Standard", "100 bytes", "100 bytes", "97.6%"]
+      - ["UE+ Small Message", "68 bytes", "68 bytes", "98.4%"]
+      - ["UE+ Encrypted", "116 bytes", "132 bytes", "96.9%"]
+      - ["RoCEv2 (IPv4)", "58 bytes", "78 bytes", "98.6%"]
+      - ["RoCEv2 (IPv6)", "78 bytes", "98 bytes", "98.1%"]
+      - ["Standard Ethernet", "14 bytes", "18 bytes", "99.6%"]
+
+  - type: section_header
+    title: "Report Index"
+    subtitle: "Detailed Technical Reports"
+
+  - type: item_list
+    title: "Protocol Reports"
+    items:
+      - "technical_report_ue.pptx - Ultra Ethernet (103 files, 800 lines)"
+      - "technical_report_ethernet.pptx - Ethernet (12 files, 366 lines)"
+      - "technical_report_roce.pptx - RoCEv2 (9 files, 411 lines)"
+      - "technical_report_cornelis.pptx - Cornelis (12 files, 382 lines)"
+      - "technical_report_ualink.pptx - UALink Reference (38 files, 486 lines)"
+    item_type: "closed"
+
+  - type: section_header
+    title: "References"
+    subtitle: "Specifications and Documentation"
+
+  - type: item_list
+    title: "External Specifications"
+    items:
+      - "Ultra Ethernet Specification v1.0.1"
+      - "InfiniBand Architecture Specification v1.4"
+      - "IEEE 802.3 Ethernet Standard"
+      - "IEEE 802.1Q VLAN Standard"
+      - "UALink 200 Specification v1.0"
+      - "RFC 791 (IPv4), RFC 8200 (IPv6), RFC 793 (TCP), RFC 768 (UDP)"
+    item_type: "closed"
+
+  - type: item_list
+    title: "Internal Documentation"
+    items:
+      - "analysis/packet_taxonomy/packet_taxonomy.md - Master index"
+      - "analysis/packet_taxonomy/packet_taxonomy_ue_plus_variants.md - UE+ variants"
+      - "analysis/packet_taxonomy/WORK_ITEMS.md - Work tracking"
+      - "analysis/packet_taxonomy/DATAMODEL_UPDATES.md - Change history"
+    item_type: "closed"
+
+  - type: item_list
+    title: "Datamodel Locations"
+    items:
+      - "earlysim/datamodel/protocols/ue/ - Ultra Ethernet (103 files)"
+      - "earlysim/datamodel/protocols/ethernet/ - Ethernet (12 files)"
+      - "earlysim/datamodel/protocols/roce/ - RoCEv2 (9 files)"
+      - "earlysim/datamodel/protocols/cornelis/ - Cornelis (12 files)"
+      - "earlysim/datamodel/protocols/ualink/ - UALink (38 files)"
+    item_type: "closed"

@@ -1,0 +1,1297 @@
+title: 'PMR Packet Taxonomy: RoCEv2 Technical Report'
+subtitle: RDMA over Converged Ethernet v2 Protocol Formats
+presenter:
+  name: Packet Taxonomy Team
+  info: Cornelis Networks Engineering
+sections:
+- type: section_header
+  title: RoCEv2 Overview
+  subtitle: RDMA over Converged Ethernet v2 Characteristics
+- type: bullets
+  title: RoCEv2 Key Characteristics
+  items:
+  - RDMA operations over standard Ethernet using UDP/IP encapsulation
+  - 'UDP Destination Port: 4791 (0x12B7)'
+  - 'Max PSN: 2^24 (16,777,216 packet sequence numbers)'
+  - 'Max QP: 2^24 (16,777,216 queue pairs)'
+  - 'Atomic Size: 8 bytes (64-bit operations)'
+  - End-to-end integrity via ICRC (Invariant CRC)
+- type: table
+  title: PMR Supported Transport Types
+  headers:
+  - Type
+  - Value
+  - Description
+  - PMR Support
+  rows:
+  - - RC
+    - '0x00'
+    - Reliable Connection
+    - 'Yes'
+  - - UC
+    - '0x20'
+    - Unreliable Connection
+    - 'Yes'
+  - - RD
+    - '0x40'
+    - Reliable Datagram
+    - 'Yes'
+  - - UD
+    - '0x60'
+    - Unreliable Datagram
+    - 'Yes'
+  - - CNP
+    - '0x80'
+    - Congestion Notification Packet (ECN)
+    - 'Yes'
+  - - XRC
+    - '0xA0'
+    - Extended Reliable Connection
+    - No - Not Supported
+- type: section_header
+  title: RoCEv2 Packet Variants
+  subtitle: Complete packet type matrix with header stacks
+- type: text
+  content: 'Reference: IB Spec Vol 1, v1.4 - This section documents all supported RoCEv2 packet variants with their header
+    stacks and use cases.'
+- type: table
+  title: RC (Reliable Connection) Packet Variants
+  headers:
+  - Variant
+  - Header Stack
+  - Total Overhead
+  - Use Case
+  rows:
+  - - RC SEND_ONLY
+    - Eth → IPv4 → UDP → BTH → ICRC
+    - 58B
+    - Single-packet send
+  - - RC SEND_ONLY_IMM
+    - Eth → IPv4 → UDP → BTH → ImmDt → ICRC
+    - 62B
+    - Send with immediate data
+  - - RC SEND_FIRST/MIDDLE/LAST
+    - Eth → IPv4 → UDP → BTH → ICRC
+    - 58B
+    - Multi-packet send
+  - - RC RDMA_WRITE_ONLY
+    - Eth → IPv4 → UDP → BTH → RETH → ICRC
+    - 74B
+    - Single-packet RDMA write
+  - - RC RDMA_WRITE_ONLY_IMM
+    - Eth → IPv4 → UDP → BTH → RETH → ImmDt → ICRC
+    - 78B
+    - RDMA write with immediate
+  - - RC RDMA_WRITE_FIRST
+    - Eth → IPv4 → UDP → BTH → RETH → ICRC
+    - 74B
+    - First packet of multi-packet write
+  - - RC RDMA_WRITE_MIDDLE/LAST
+    - Eth → IPv4 → UDP → BTH → ICRC
+    - 58B
+    - Continuation packets
+  - - RC RDMA_READ_REQUEST
+    - Eth → IPv4 → UDP → BTH → RETH → ICRC
+    - 74B
+    - RDMA read request (no payload)
+  - - RC RDMA_READ_RESPONSE
+    - Eth → IPv4 → UDP → BTH → AETH → ICRC
+    - 62B
+    - RDMA read response with data
+  - - RC ACK
+    - Eth → IPv4 → UDP → BTH → AETH → ICRC
+    - 62B
+    - Acknowledgment (no payload)
+  - - RC CMP_SWAP
+    - Eth → IPv4 → UDP → BTH → AtomicETH → ICRC
+    - 86B
+    - Compare-and-swap atomic
+  - - RC FETCH_ADD
+    - Eth → IPv4 → UDP → BTH → AtomicETH → ICRC
+    - 86B
+    - Fetch-and-add atomic
+  - - RC ATOMIC_ACK
+    - Eth → IPv4 → UDP → BTH → AETH → AtomicAckETH → ICRC
+    - 70B
+    - Atomic operation response
+- type: table
+  title: UD (Unreliable Datagram) Packet Variants
+  headers:
+  - Variant
+  - Header Stack
+  - Total Overhead
+  - Use Case
+  rows:
+  - - UD SEND_ONLY
+    - Eth → IPv4 → UDP → BTH → DETH → ICRC
+    - 66B
+    - Connectionless send
+  - - UD SEND_ONLY_IMM
+    - Eth → IPv4 → UDP → BTH → DETH → ImmDt → ICRC
+    - 70B
+    - Connectionless send with immediate
+- type: table
+  title: UC (Unreliable Connection) Packet Variants
+  headers:
+  - Variant
+  - Header Stack
+  - Total Overhead
+  - Use Case
+  rows:
+  - - UC SEND_ONLY
+    - Eth → IPv4 → UDP → BTH → ICRC
+    - 58B
+    - Unreliable send
+  - - UC RDMA_WRITE_ONLY
+    - Eth → IPv4 → UDP → BTH → RETH → ICRC
+    - 74B
+    - Unreliable RDMA write
+  - - UC RDMA_WRITE_FIRST
+    - Eth → IPv4 → UDP → BTH → RETH → ICRC
+    - 74B
+    - First packet of unreliable write
+- type: table
+  title: IPv6 Packet Variants (Add 20B to IPv4 overhead)
+  headers:
+  - Variant
+  - Header Stack
+  - Total Overhead
+  - Use Case
+  rows:
+  - - RC SEND_ONLY (IPv6)
+    - Eth → IPv6 → UDP → BTH → ICRC
+    - 78B
+    - IPv6 single-packet send
+  - - RC RDMA_WRITE_ONLY (IPv6)
+    - Eth → IPv6 → UDP → BTH → RETH → ICRC
+    - 94B
+    - IPv6 RDMA write
+  - - UD SEND_ONLY (IPv6)
+    - Eth → IPv6 → UDP → BTH → DETH → ICRC
+    - 86B
+    - IPv6 connectionless send
+- type: section_header
+  title: Header Overhead Summary
+  subtitle: Detailed header size breakdown by component
+- type: text
+  content: 'Reference: IB Spec Vol 1, v1.4 - Header sizes for each protocol layer component.'
+- type: table
+  title: Header Size by Component (IPv4)
+  headers:
+  - Operation
+  - Eth
+  - IP
+  - UDP
+  - BTH
+  - Extended
+  - ICRC
+  - Total
+  rows:
+  - - SEND_ONLY
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - '-'
+    - 4B
+    - 58B
+  - - SEND_ONLY_IMM
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 4B (ImmDt)
+    - 4B
+    - 62B
+  - - RDMA_WRITE_ONLY
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 16B (RETH)
+    - 4B
+    - 74B
+  - - RDMA_WRITE_ONLY_IMM
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 20B (RETH+ImmDt)
+    - 4B
+    - 78B
+  - - RDMA_READ_REQUEST
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 16B (RETH)
+    - 4B
+    - 74B
+  - - RDMA_READ_RESPONSE
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 4B (AETH)
+    - 4B
+    - 62B
+  - - ACK
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 4B (AETH)
+    - 4B
+    - 62B
+  - - CMP_SWAP/FETCH_ADD
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 28B (AtomicETH)
+    - 4B
+    - 86B
+  - - ATOMIC_ACK
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 12B (AETH+AtomicAckETH)
+    - 4B
+    - 70B
+  - - UD SEND_ONLY
+    - 14B
+    - 20B
+    - 8B
+    - 12B
+    - 8B (DETH)
+    - 4B
+    - 66B
+- type: table
+  title: Protocol Efficiency Comparison (4KB Payload)
+  headers:
+  - Protocol
+  - Min Overhead
+  - Max Overhead
+  - Efficiency (4KB)
+  rows:
+  - - RoCEv2 RC SEND (IPv4)
+    - 58B
+    - 58B
+    - 98.6%
+  - - RoCEv2 RC RDMA_WRITE (IPv4)
+    - 74B
+    - 74B
+    - 98.2%
+  - - RoCEv2 UD SEND (IPv4)
+    - 66B
+    - 66B
+    - 98.4%
+  - - RoCEv2 RC SEND (IPv6)
+    - 78B
+    - 78B
+    - 98.1%
+  - - UE Standard
+    - 100B
+    - 100B
+    - 97.6%
+  - - UE Small Message
+    - 88B
+    - 88B
+    - 97.9%
+- type: code_block
+  title: RoCEv2 RC SEND_ONLY Wire Format (58B)
+  language: ''
+  code: '┌──────────┬──────────┬──────────┬──────────┬──────────┐
+
+    │ Ethernet │   IPv4   │   UDP    │   BTH    │   ICRC   │
+
+    │   14B    │   20B    │   8B     │   12B    │    4B    │
+
+    └──────────┴──────────┴──────────┴──────────┴──────────┘
+
+
+    Component Breakdown:
+
+    - Ethernet II (14B): dst_mac[6B], src_mac[6B], ethertype=0x0800[2B]
+
+    - IPv4 (20B): version, IHL, DSCP/ECN, length, ID, flags, TTL, protocol=17, checksum, src_ip, dst_ip
+
+    - UDP (8B): src_port (entropy), dst_port=4791, length, checksum
+
+    - BTH (12B): opcode=0x04, flags, p_key, dest_qp, ack_req, psn
+
+    - ICRC (4B): CRC-32 over BTH + payload (with masked fields)'
+- type: code_block
+  title: RoCEv2 RC RDMA_WRITE_ONLY Wire Format (74B)
+  language: ''
+  code: '┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+
+    │ Ethernet │   IPv4   │   UDP    │   BTH    │   RETH   │   ICRC   │
+
+    │   14B    │   20B    │   8B     │   12B    │   16B    │    4B    │
+
+    └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+
+    RETH (16B):
+
+    - virtual_address[64b]: Remote memory address
+
+    - r_key[32b]: Remote key for memory authorization
+
+    - dma_length[32b]: Total bytes to transfer'
+- type: code_block
+  title: RoCEv2 RC CMP_SWAP/FETCH_ADD Wire Format (86B)
+  language: ''
+  code: '┌──────────┬──────────┬──────────┬──────────┬────────────┬──────────┐
+
+    │ Ethernet │   IPv4   │   UDP    │   BTH    │ AtomicETH  │   ICRC   │
+
+    │   14B    │   20B    │   8B     │   12B    │    28B     │    4B    │
+
+    └──────────┴──────────┴──────────┴──────────┴────────────┴──────────┘
+
+
+    AtomicETH (28B):
+
+    - virtual_address[64b]: Remote address (must be 8-byte aligned)
+
+    - r_key[32b]: Remote key for memory authorization
+
+    - swap_or_add_data[64b]: Swap value (CMP_SWAP) or Add value (FETCH_ADD)
+
+    - compare_data[64b]: Compare value (CMP_SWAP only, 0 for FETCH_ADD)
+
+
+    Semantics:
+
+    - CMP_SWAP: if (*addr == compare_data) { *addr = swap_data; } return original;
+
+    - FETCH_ADD: original = *addr; *addr += add_data; return original;'
+- type: section_header
+  title: Protocol Architecture
+  subtitle: RoCEv2 Packet Encapsulation Stack
+- type: bullets
+  title: RoCEv2 Protocol Stack
+  items:
+  - 'Layer 2: Ethernet II Header (14 bytes, +4 if VLAN tagged)'
+  - 'Layer 3: IP Header (IPv4: 20 bytes, IPv6: 40 bytes)'
+  - 'Layer 4: UDP Header (8 bytes, dest port 4791)'
+  - 'Transport: BTH - Base Transport Header (12 bytes, always present)'
+  - 'Extended: Optional headers based on operation type'
+  - 'Trailer: ICRC - Invariant CRC (4 bytes, always present)'
+- type: table
+  title: Protocol Layer Sizes
+  headers:
+  - Layer
+  - Component
+  - Size (bytes)
+  - Notes
+  rows:
+  - - L2
+    - Ethernet II
+    - '14'
+    - +4 bytes if VLAN tagged
+  - - L3
+    - IPv4
+    - '20'
+    - +options if present
+  - - L3
+    - IPv6
+    - '40'
+    - +extension headers
+  - - L4
+    - UDP
+    - '8'
+    - Fixed size
+  - - Transport
+    - BTH
+    - '12'
+    - Always present in RoCEv2
+  - - Trailer
+    - ICRC
+    - '4'
+    - Always present
+- type: section_header
+  title: Header Building Blocks
+  subtitle: RoCEv2 Transport and Extended Headers
+- type: table
+  title: RoCEv2 Header Datamodel Files
+  headers:
+  - Header
+  - File
+  - Size
+  - Purpose
+  rows:
+  - - BTH
+    - bth.ksy
+    - 12 bytes
+    - Base Transport Header - present in all packets
+  - - RETH
+    - reth.ksy
+    - 16 bytes
+    - RDMA Extended - remote address for RDMA ops
+  - - AETH
+    - aeth.ksy
+    - 4 bytes
+    - ACK Extended - acknowledgment and credits
+  - - DETH
+    - deth.ksy
+    - 8 bytes
+    - Datagram Extended - source QP for UD
+  - - ImmDt
+    - immdt.ksy
+    - 4 bytes
+    - Immediate Data - 32-bit app-defined value
+  - - AtomicETH
+    - atomiceth.ksy
+    - 28 bytes
+    - Atomic Extended - CMP_SWAP/FETCH_ADD
+  - - AtomicAckETH
+    - atomicacketh.ksy
+    - 8 bytes
+    - Atomic ACK - original value response
+  - - ICRC
+    - icrc.ksy
+    - 4 bytes
+    - Invariant CRC - end-to-end integrity
+  - - QP FSM
+    - qp_state_machine.ksy
+    - N/A
+    - Queue Pair state machine definition
+- type: bullets
+  title: Datamodel Location
+  items:
+  - 'Transport headers: earlysim/datamodel/protocols/roce/transport/'
+  - 'Protocol definitions: earlysim/datamodel/protocols/roce/protocols/'
+  - All files follow Kaitai Struct YAML format (.ksy)
+  - Include x-spec metadata for IB Specification traceability
+- type: section_header
+  title: Base Transport Header (BTH)
+  subtitle: 12-byte header present in all RoCEv2 packets
+- type: table
+  title: BTH Field Layout (bth.ksy)
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - opcode
+    - '8'
+    - '0'
+    - Transport type [7:5] + Operation [4:0]
+  - - flags.SE
+    - '1'
+    - 1[7]
+    - Solicited Event - request completion notification
+  - - flags.M
+    - '1'
+    - 1[6]
+    - Migration state (MigReq)
+  - - flags.pad
+    - '2'
+    - 1[5:4]
+    - Pad count (0-3 bytes)
+  - - flags.tver
+    - '4'
+    - 1[3:0]
+    - Transport version (must be 0)
+  - - p_key
+    - '16'
+    - 2-3
+    - Partition key (bit 15 = membership type)
+  - - reserved
+    - '8'
+    - '4'
+    - Reserved (FECN/BECN when ECN enabled)
+  - - dest_qp
+    - '24'
+    - 5-7
+    - Destination Queue Pair number
+  - - ack_req
+    - '1'
+    - 8[7]
+    - ACK request (reliable transports only)
+  - - reserved2
+    - '7'
+    - 8[6:0]
+    - Reserved (must be zero)
+  - - psn
+    - '24'
+    - 9-11
+    - Packet Sequence Number (24-bit, wraps)
+- type: bullets
+  title: BTH Opcode Encoding
+  items:
+  - Opcode = (Transport Type << 5) | Operation
+  - 'Transport Type (bits [7:5]): RC=0, UC=1, RD=2, UD=3, CNP=4, XRC=5'
+  - 'Operation (bits [4:0]): SEND, RDMA_WRITE, RDMA_READ, Atomic, ACK'
+  - 'Example: RC SEND_ONLY = 0x00 | 0x04 = 0x04'
+  - 'Example: UD SEND_ONLY = 0x60 | 0x04 = 0x64'
+- type: section_header
+  title: Packet Variant Matrix
+  subtitle: Operations and Extended Headers by Type
+- type: table
+  title: Operation Codes and Extended Headers
+  headers:
+  - Operation
+  - Code
+  - Extended Headers
+  - Payload
+  rows:
+  - - SEND_FIRST
+    - '0x00'
+    - None
+    - 'Yes'
+  - - SEND_MIDDLE
+    - '0x01'
+    - None
+    - 'Yes'
+  - - SEND_LAST
+    - '0x02'
+    - None
+    - 'Yes'
+  - - SEND_LAST_IMM
+    - '0x03'
+    - ImmDt (4B)
+    - 'Yes'
+  - - SEND_ONLY
+    - '0x04'
+    - None
+    - 'Yes'
+  - - SEND_ONLY_IMM
+    - '0x05'
+    - ImmDt (4B)
+    - 'Yes'
+  - - RDMA_WRITE_FIRST
+    - '0x06'
+    - RETH (16B)
+    - 'Yes'
+  - - RDMA_WRITE_MIDDLE
+    - '0x07'
+    - None
+    - 'Yes'
+  - - RDMA_WRITE_LAST
+    - '0x08'
+    - None
+    - 'Yes'
+  - - RDMA_WRITE_LAST_IMM
+    - '0x09'
+    - ImmDt (4B)
+    - 'Yes'
+  - - RDMA_WRITE_ONLY
+    - '0x0A'
+    - RETH (16B)
+    - 'Yes'
+  - - RDMA_WRITE_ONLY_IMM
+    - '0x0B'
+    - RETH (16B) + ImmDt (4B)
+    - 'Yes'
+  - - RDMA_READ_REQUEST
+    - '0x0C'
+    - RETH (16B)
+    - 'No'
+  - - RDMA_READ_RESP_FIRST
+    - '0x0D'
+    - AETH (4B)
+    - 'Yes'
+  - - RDMA_READ_RESP_MIDDLE
+    - '0x0E'
+    - None
+    - 'Yes'
+  - - RDMA_READ_RESP_LAST
+    - '0x0F'
+    - AETH (4B)
+    - 'Yes'
+  - - RDMA_READ_RESP_ONLY
+    - '0x10'
+    - AETH (4B)
+    - 'Yes'
+  - - ACK
+    - '0x11'
+    - AETH (4B)
+    - 'No'
+  - - ATOMIC_ACK
+    - '0x12'
+    - AETH (4B) + AtomicAckETH (8B)
+    - 'No'
+  - - CMP_SWAP
+    - '0x13'
+    - AtomicETH (28B)
+    - 'No'
+  - - FETCH_ADD
+    - '0x14'
+    - AtomicETH (28B)
+    - 'No'
+- type: section_header
+  title: RETH - RDMA Extended Transport Header
+  subtitle: 16-byte header for RDMA READ/WRITE operations
+- type: table
+  title: RETH Field Layout (reth.ksy)
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - virtual_address
+    - '64'
+    - 0-7
+    - Remote virtual address for RDMA operation
+  - - r_key
+    - '32'
+    - 8-11
+    - Remote key for memory region authorization
+  - - dma_length
+    - '32'
+    - 12-15
+    - Total bytes to transfer (max 2GB)
+- type: bullets
+  title: RETH Usage
+  items:
+  - Present in RDMA_WRITE_FIRST, RDMA_WRITE_ONLY, RDMA_WRITE_ONLY_IMM
+  - Present in RDMA_READ_REQUEST
+  - Specifies where to read from or write to in remote memory
+  - R-key must match registered memory region on remote node
+  - DMA length is total for multi-packet operations
+- type: section_header
+  title: AETH - ACK Extended Transport Header
+  subtitle: 4-byte header for acknowledgments and responses
+- type: table
+  title: AETH Field Layout (aeth.ksy)
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - syndrome
+    - '8'
+    - '0'
+    - ACK type [6:5] + value [4:0]
+  - - msn
+    - '24'
+    - 1-3
+    - Message Sequence Number being acknowledged
+- type: table
+  title: AETH Syndrome Encoding
+  headers:
+  - Bits [6:5]
+  - Type
+  - Bits [4:0] Meaning
+  rows:
+  - - '00'
+    - ACK
+    - Credit count (0-31, 31=unlimited)
+  - - '01'
+    - RNR NAK
+    - RNR timeout value (encoded)
+  - - '10'
+    - Reserved
+    - '-'
+  - - '11'
+    - NAK
+    - NAK error code
+- type: table
+  title: NAK Error Codes
+  headers:
+  - Code
+  - Name
+  - Description
+  rows:
+  - - '0x00'
+    - PSN_SEQ_ERROR
+    - PSN sequence error
+  - - '0x01'
+    - INVALID_REQUEST
+    - Invalid request
+  - - '0x02'
+    - REMOTE_ACCESS_ERROR
+    - Remote access error
+  - - '0x03'
+    - REMOTE_OP_ERROR
+    - Remote operation error
+  - - '0x04'
+    - INVALID_RD_REQUEST
+    - Invalid RD request
+- type: section_header
+  title: AtomicETH - Atomic Extended Transport Header
+  subtitle: 28-byte header for atomic operations
+- type: table
+  title: AtomicETH Field Layout (atomiceth.ksy)
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - virtual_address
+    - '64'
+    - 0-7
+    - Remote address (must be 8-byte aligned)
+  - - r_key
+    - '32'
+    - 8-11
+    - Remote key for memory authorization
+  - - swap_or_add_data
+    - '64'
+    - 12-19
+    - Swap value (CMP_SWAP) or Add value (FETCH_ADD)
+  - - compare_data
+    - '64'
+    - 20-27
+    - Compare value (CMP_SWAP only, 0 for FETCH_ADD)
+- type: bullets
+  title: Atomic Operation Semantics
+  items:
+  - 'CMP_SWAP: if (*addr == compare_data) { *addr = swap_data; } return original;'
+  - 'FETCH_ADD: original = *addr; *addr += add_data; return original;'
+  - Operations are always 8 bytes (64-bit)
+  - Address must be 8-byte aligned
+  - Only supported on RC and RD transport types
+  - Response via ATOMIC_ACK with AtomicAckETH containing original value
+- type: section_header
+  title: QP State Machine
+  subtitle: Queue Pair lifecycle from qp_state_machine.ksy
+- type: table
+  title: QP States (IB Spec Section 10.3)
+  headers:
+  - State
+  - Description
+  - Send
+  - Receive
+  rows:
+  - - RESET
+    - Initial state after QP creation
+    - 'No'
+    - 'No'
+  - - INIT
+    - QP initialized, can post receive WQEs
+    - 'No'
+    - 'Yes'
+  - - RTR
+    - Ready To Receive, remote QP configured
+    - 'No'
+    - 'Yes'
+  - - RTS
+    - Ready To Send, fully operational
+    - 'Yes'
+    - 'Yes'
+  - - SQD
+    - Send Queue Drained, graceful shutdown
+    - Draining
+    - 'Yes'
+  - - SQE
+    - Send Queue Error, recoverable
+    - Halted
+    - 'Yes'
+  - - ERROR
+    - Fatal error, must reset or destroy
+    - 'No'
+    - 'No'
+- type: bullets
+  title: QP State Transitions
+  items:
+  - 'RESET -> INIT: Configure port, pkey, qkey (UD)'
+  - 'INIT -> RTR: Configure dest_qp, path_mtu, rq_psn'
+  - 'RTR -> RTS: Configure sq_psn, timeout, retry_cnt'
+  - 'RTS -> SQD: Graceful drain for QP modification'
+  - 'SQE -> RTS: Error recovery complete'
+  - 'Any -> ERROR: Fatal error (unrecoverable)'
+  - 'Any -> RESET: Reset QP to initial state'
+- type: section_header
+  title: Operation Validity Matrix
+  subtitle: Operations supported by transport type
+- type: table
+  title: Operation Validity by Transport Type
+  headers:
+  - Operation
+  - RC
+  - UC
+  - RD
+  - UD
+  - CNP
+  rows:
+  - - SEND_FIRST
+    - Y
+    - Y
+    - Y
+    - '-'
+    - '-'
+  - - SEND_MIDDLE
+    - Y
+    - Y
+    - Y
+    - '-'
+    - '-'
+  - - SEND_LAST
+    - Y
+    - Y
+    - Y
+    - '-'
+    - '-'
+  - - SEND_LAST_IMM
+    - Y
+    - Y
+    - Y
+    - '-'
+    - '-'
+  - - SEND_ONLY
+    - Y
+    - Y
+    - Y
+    - Y
+    - '-'
+  - - SEND_ONLY_IMM
+    - Y
+    - Y
+    - Y
+    - Y
+    - '-'
+  - - RDMA_WRITE_*
+    - Y
+    - Y
+    - Y
+    - '-'
+    - '-'
+  - - RDMA_READ_*
+    - Y
+    - '-'
+    - Y
+    - '-'
+    - '-'
+  - - ACK
+    - Y
+    - '-'
+    - Y
+    - '-'
+    - '-'
+  - - ATOMIC_ACK
+    - Y
+    - '-'
+    - Y
+    - '-'
+    - '-'
+  - - CMP_SWAP
+    - Y
+    - '-'
+    - Y
+    - '-'
+    - '-'
+  - - FETCH_ADD
+    - Y
+    - '-'
+    - Y
+    - '-'
+    - '-'
+- type: bullets
+  title: Transport Type Restrictions
+  items:
+  - 'RC (Reliable Connection): All operations supported'
+  - 'UC (Unreliable Connection): No RDMA READ, no Atomics (no ACK mechanism)'
+  - 'RD (Reliable Datagram): All operations supported'
+  - 'UD (Unreliable Datagram): Only SEND_ONLY and SEND_ONLY_IMM'
+  - 'CNP (Congestion Notification): No data operations (ECN signaling only)'
+  - 'XRC: NOT supported by PMR (no shared receive queues)'
+- type: section_header
+  title: Header Overhead Summary
+  subtitle: Total header sizes by operation type
+- type: table
+  title: Header Overhead by Operation
+  headers:
+  - Operation
+  - BTH
+  - Extended
+  - ICRC
+  - Min Total
+  rows:
+  - - SEND_ONLY
+    - '12'
+    - '0'
+    - '4'
+    - 16 bytes
+  - - SEND_ONLY_IMM
+    - '12'
+    - 4 (ImmDt)
+    - '4'
+    - 20 bytes
+  - - RDMA_WRITE_ONLY
+    - '12'
+    - 16 (RETH)
+    - '4'
+    - 32 bytes
+  - - RDMA_WRITE_ONLY_IMM
+    - '12'
+    - 20 (RETH+ImmDt)
+    - '4'
+    - 36 bytes
+  - - RDMA_READ_REQUEST
+    - '12'
+    - 16 (RETH)
+    - '4'
+    - 32 bytes
+  - - RDMA_READ_RESPONSE
+    - '12'
+    - 4 (AETH)
+    - '4'
+    - 20 bytes
+  - - ACK
+    - '12'
+    - 4 (AETH)
+    - '4'
+    - 20 bytes
+  - - CMP_SWAP
+    - '12'
+    - 28 (AtomicETH)
+    - '4'
+    - 44 bytes
+  - - FETCH_ADD
+    - '12'
+    - 28 (AtomicETH)
+    - '4'
+    - 44 bytes
+  - - ATOMIC_ACK
+    - '12'
+    - 12 (AETH+AtomicAckETH)
+    - '4'
+    - 28 bytes
+  - - UD SEND_ONLY
+    - '12'
+    - 8 (DETH)
+    - '4'
+    - 24 bytes
+- type: section_header
+  title: ICRC - Invariant CRC
+  subtitle: End-to-end integrity from icrc.ksy
+- type: table
+  title: ICRC Parameters
+  headers:
+  - Parameter
+  - Value
+  - Description
+  rows:
+  - - Polynomial
+    - '0x04C11DB7'
+    - CRC-32 (IEEE 802.3)
+  - - Polynomial (reflected)
+    - '0xEDB88320'
+    - For table-driven implementation
+  - - Initial value
+    - '0xFFFFFFFF'
+    - All 1s
+  - - Final XOR
+    - '0xFFFFFFFF'
+    - Inverts result
+  - - Seed (RoCEv2)
+    - '0xDEBB20E3'
+    - Pre-computed for masked LRH
+- type: bullets
+  title: ICRC Coverage and Masking
+  items:
+  - 'Covered: BTH (with masked fields), extended headers, payload, padding'
+  - 'IPv4 masked: TOS (byte 1), TTL (byte 8), Checksum (bytes 10-11)'
+  - 'IPv6 masked: Traffic Class, Flow Label, Hop Limit'
+  - 'UDP masked: Checksum (bytes 6-7)'
+  - 'BTH masked: Reserved byte (byte 4, contains FECN/BECN)'
+  - Masking ensures ICRC is invariant to fields modified in transit
+- type: section_header
+  title: Datamodel Coverage
+  subtitle: Complete RoCE KSY file inventory
+- type: table
+  title: RoCE Datamodel Files (9 total)
+  headers:
+  - Category
+  - File
+  - Path
+  - IB Spec Section
+  rows:
+  - - Transport
+    - bth.ksy
+    - roce/transport/bth.ksy
+    - Section 9.2
+  - - Transport
+    - reth.ksy
+    - roce/transport/reth.ksy
+    - Section 9.3
+  - - Transport
+    - aeth.ksy
+    - roce/transport/aeth.ksy
+    - Section 9.4
+  - - Transport
+    - deth.ksy
+    - roce/transport/deth.ksy
+    - Section 9.5
+  - - Transport
+    - immdt.ksy
+    - roce/transport/immdt.ksy
+    - Section 9.6
+  - - Transport
+    - atomiceth.ksy
+    - roce/transport/atomiceth.ksy
+    - Section 9.8
+  - - Transport
+    - atomicacketh.ksy
+    - roce/transport/atomicacketh.ksy
+    - Section 9.9
+  - - Transport
+    - icrc.ksy
+    - roce/transport/icrc.ksy
+    - Section 9.7
+  - - Protocol
+    - qp_state_machine.ksy
+    - roce/protocols/qp_state_machine.ksy
+    - Section 10.3
+- type: bullets
+  title: Datamodel Features
+  items:
+  - All files include x-spec metadata for IB Specification traceability
+  - Cross-references between related headers via x-related-headers
+  - Computed instances for derived values (transport_type, operation, etc.)
+  - Enums for operation codes, transport types, NAK codes, RNR timeouts
+  - Comprehensive doc strings with wire format diagrams
+- type: section_header
+  title: Detailed Header Formats
+  subtitle: Field-level documentation with packet diagrams
+- type: section_header
+  title: RoCEv2 Base Transport Header
+  subtitle: 12 bytes (96 bits)
+- type: code_block
+  title: roce_bth Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |    opcode     |     flags     |             pkey             |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |   reserved    |                    dest_qp                   |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |a|  reserved2  |                      psn                     |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: roce_bth Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - opcode
+    - '8'
+    - '0'
+    - u1
+    - Operation code (8 bits)
+  - - flags
+    - '8'
+    - '8'
+    - u1
+    - 'Flags byte containing:'
+  - - pkey
+    - '16'
+    - '16'
+    - u2
+    - Partition Key (16 bits)
+  - - reserved
+    - '8'
+    - '32'
+    - b8
+    - Reserved field (8 bits).
+  - - dest_qp
+    - '24'
+    - '40'
+    - b24
+    - Destination Queue Pair number (24 bits)
+  - - ack_req
+    - '1'
+    - '64'
+    - b1
+    - Acknowledge Request (1 bit)
+  - - reserved2
+    - '7'
+    - '65'
+    - b7
+    - Reserved field (7 bits, must be zero)
+  - - psn
+    - '24'
+    - '72'
+    - b24
+    - Packet Sequence Number (24 bits)
+- type: section_header
+  title: RoCEv2 RDMA Extended Transport Header
+  subtitle: 16 bytes (128 bits)
+- type: code_block
+  title: roce_reth Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        virtual_address                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        virtual_address                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                             rkey                             |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          dma_length                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: roce_reth Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - virtual_address
+    - '64'
+    - '0'
+    - u8
+    - Virtual Address (64 bits)
+  - - rkey
+    - '32'
+    - '64'
+    - u4
+    - Remote Key (32 bits)
+  - - dma_length
+    - '32'
+    - '96'
+    - u4
+    - DMA Length (32 bits)
+- type: section_header
+  title: RoCEv2 ACK Extended Transport Header
+  subtitle: 4 bytes (32 bits)
+- type: code_block
+  title: roce_aeth Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |   syndrome    |                      msn                     |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: roce_aeth Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - syndrome
+    - '8'
+    - '0'
+    - u1
+    - Syndrome field (8 bits) - per IB Spec Vol 1, v1.4, Table 46
+  - - msn
+    - '24'
+    - '8'
+    - b24
+    - Message Sequence Number (24 bits)
+- type: section_header
+  title: RoCEv2 Datagram Extended Transport Header
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: roce_deth Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                             qkey                             |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |   reserved    |                    src_qp                    |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: roce_deth Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - qkey
+    - '32'
+    - '0'
+    - u4
+    - Queue Key (32 bits)
+  - - reserved
+    - '8'
+    - '32'
+    - b8
+    - Reserved field (8 bits, must be zero)
+  - - src_qp
+    - '24'
+    - '40'
+    - b24
+    - Source Queue Pair number (24 bits)
+- type: section_header
+  title: RoCEv2 Atomic Extended Transport Header
+  subtitle: 28 bytes (224 bits)
+- type: code_block
+  title: roce_atomiceth Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        virtual_address                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        virtual_address                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                             rkey                             |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                       swap_or_add_data                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                       swap_or_add_data                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                         compare_data                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                         compare_data                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: roce_atomiceth Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - virtual_address
+    - '64'
+    - '0'
+    - u8
+    - Virtual Address (64 bits)
+  - - rkey
+    - '32'
+    - '64'
+    - u4
+    - Remote Key (32 bits)
+  - - swap_or_add_data
+    - '64'
+    - '96'
+    - u8
+    - Swap/Add Data (64 bits)
+  - - compare_data
+    - '64'
+    - '160'
+    - u8
+    - Compare Data (64 bits)
+- type: section_header
+  title: RoCEv2 Immediate Data
+  subtitle: 4 bytes (32 bits)
+- type: code_block
+  title: roce_immdt Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        immediate_data                        |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: roce_immdt Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - immediate_data
+    - '32'
+    - '0'
+    - u4
+    - Immediate Data value (32 bits)
+- type: section_header
+  title: References
+  subtitle: Specification and Documentation Sources
+- type: bullets
+  title: Primary References
+  items:
+  - InfiniBand Architecture Specification Volume 1, Release 1.4
+  - RoCEv2 Annex A17 (IBTA)
+  - RFC 4391 (Transmission of IP Datagrams over InfiniBand)
+  - Linux kernel drivers/infiniband/sw/rxe/rxe_icrc.c (ICRC reference)
+- type: bullets
+  title: Internal Documentation
+  items:
+  - 'Analysis: analysis/packet_taxonomy/packet_taxonomy_rocev2.md'
+  - 'Datamodel: earlysim/datamodel/protocols/roce/'
+  - 'Parent taxonomy: analysis/packet_taxonomy/packet_taxonomy.md'

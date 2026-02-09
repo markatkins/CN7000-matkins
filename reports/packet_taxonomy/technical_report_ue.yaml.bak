@@ -1,0 +1,2059 @@
+title: 'PMR Packet Taxonomy: Ultra Ethernet Technical Report'
+subtitle: UE Specification v1.0.1 Protocol Formats
+presenter:
+  name: Packet Taxonomy Team
+  info: Cornelis Networks Engineering
+sections:
+- type: section_header
+  title: Ultra Ethernet Overview
+  subtitle: Protocol Architecture and Key Characteristics
+- type: item_list
+  title: UE Protocol Key Characteristics
+  items:
+  - High-performance RDMA transport over Ethernet infrastructure
+  - 'Layered architecture: Physical, Link, Network, Transport'
+  - 'Transport sublayers: PDS (Packet Delivery), SES (Semantic), CMS (Congestion), TSS (Security)'
+  - 'Multiple delivery modes: RUD, ROD, RUDI, UUD'
+  - 'Congestion control algorithms: NSCC, RCCC, TFC'
+  - Link-layer reliability via LLR (Link Layer Reliable)
+  - Credit-based flow control via CBFC
+  - AES-GCM encryption via TSS
+  item_type: closed
+- type: table
+  title: UE Datamodel Coverage Summary
+  headers:
+  - Layer
+  - Sublayer
+  - Format Files
+  - Protocol Files
+  - Total
+  rows:
+  - - Transport
+    - PDS
+    - '14'
+    - '16'
+    - '30'
+  - - Transport
+    - SES
+    - '15'
+    - '12'
+    - '27'
+  - - Transport
+    - CMS
+    - '7'
+    - '8'
+    - '15'
+  - - Transport
+    - TSS
+    - '2'
+    - '7'
+    - '9'
+  - - Link
+    - LLR
+    - '6'
+    - '3'
+    - '9'
+  - - Link
+    - LLDP
+    - '2'
+    - '1'
+    - '3'
+  - - Link
+    - CBFC
+    - '2'
+    - '3'
+    - '5'
+  - - Network
+    - '-'
+    - '4'
+    - '0'
+    - '4'
+  - - Physical
+    - '-'
+    - '1'
+    - '0'
+    - '1'
+  - - '**Total**'
+    - '-'
+    - '**53**'
+    - '**50**'
+    - '**103**'
+- type: section_header
+  title: Protocol Architecture
+  subtitle: UE Layer Diagram and Sublayer Relationships
+- type: code_block
+  title: UE Protocol Stack
+  language: text
+  code: '+------------------------------------------------------------------+
+
+    |                    Application / RDMA Verbs                       |
+
+    +------------------------------------------------------------------+
+
+    |                                                                   |
+
+    |  TRANSPORT LAYER                                                  |
+
+    |  +-------------------------------------------------------------+  |
+
+    |  | SES (Semantic Sublayer)                                     |  |
+
+    |  | - Request/Response operations                               |  |
+
+    |  | - RDMA Read/Write, Atomics, Tagged Send                     |  |
+
+    |  +-------------------------------------------------------------+  |
+
+    |  | PDS (Packet Delivery Sublayer)                              |  |
+
+    |  | - Reliable/Unreliable delivery                              |  |
+
+    |  | - Sequence numbers, ACK/NACK                                |  |
+
+    |  +-------------------------------------------------------------+  |
+
+    |  | CMS (Congestion Management Sublayer)                        |  |
+
+    |  | - NSCC, RCCC, TFC algorithms                                |  |
+
+    |  +-------------------------------------------------------------+  |
+
+    |  | TSS (Transport Security Sublayer)                           |  |
+
+    |  | - AES-GCM encryption                                        |  |
+
+    |  +-------------------------------------------------------------+  |
+
+    |                                                                   |
+
+    +------------------------------------------------------------------+
+
+    |  NETWORK LAYER                                                    |
+
+    |  - IPv4/IPv6 encapsulation                                        |
+
+    |  - DSCP categories, packet trimming                               |
+
+    +------------------------------------------------------------------+
+
+    |  LINK LAYER                                                       |
+
+    |  +-------------------------------------------------------------+  |
+
+    |  | LLR (Link Layer Reliable)                                   |  |
+
+    |  | - Hop-by-hop reliability                                    |  |
+
+    |  +-------------------------------------------------------------+  |
+
+    |  | CBFC (Credit-Based Flow Control)                            |  |
+
+    |  | - Per-VC flow control                                       |  |
+
+    |  +-------------------------------------------------------------+  |
+
+    +------------------------------------------------------------------+
+
+    |  PHYSICAL LAYER                                                   |
+
+    |  - 64B/66B encoding, Control Ordered Sets                         |
+
+    +------------------------------------------------------------------+
+
+    '
+- type: section_header
+  title: PDS Header Building Blocks
+  subtitle: Packet Delivery Sublayer Format Definitions
+- type: table
+  title: PDS Wire Formats (14 files)
+  headers:
+  - Type
+  - Format
+  - KSY File
+  - Size
+  - Description
+  rows:
+  - - '0x01'
+    - RUD Request
+    - rud_rod_request.ksy
+    - 12B
+    - Reliable Unordered Delivery
+  - - '0x02'
+    - ROD Request
+    - rud_rod_request.ksy
+    - 12B
+    - Reliable Ordered Delivery
+  - - '0x04'
+    - RUDI Request
+    - rudi_request_response.ksy
+    - 6B
+    - Reliable Unordered Immediate
+  - - '0x05'
+    - RUDI Response
+    - rudi_request_response.ksy
+    - 6B
+    - RUDI response
+  - - '0x06'
+    - UUD Request
+    - uud_request.ksy
+    - 6B
+    - Unreliable Unordered Delivery
+  - - '0x07'
+    - ACK
+    - rud_rod_ack.ksy
+    - 12B
+    - Acknowledgment
+  - - '0x08'
+    - ACK_CC
+    - ack_cc.ksy
+    - 28B
+    - ACK with CC state
+  - - '0x09'
+    - ACK_CCX
+    - ack_ccx.ksy
+    - 44B
+    - ACK with extended CC
+  - - '0x0A'
+    - NACK
+    - nack.ksy
+    - 12B
+    - Negative acknowledgment
+  - - '0x0B'
+    - CP
+    - rud_rod_cp.ksy
+    - 12B
+    - Control packet (10 subtypes)
+  - - '0x0C'
+    - NACK_CCX
+    - nack_ccx.ksy
+    - 28B
+    - NACK with extended CC
+  - - '0x0D'
+    - RUD_CC_REQ
+    - rud_rod_request_cc.ksy
+    - 28B
+    - RUD with CC state
+  - - '0x0E'
+    - ROD_CC_REQ
+    - rud_rod_request_cc.ksy
+    - 28B
+    - ROD with CC state
+  - - '-'
+    - Prologue
+    - prologue.ksy
+    - 2B
+    - PDS header prologue
+  - - '-'
+    - Entropy Header
+    - entropy_header.ksy
+    - 4B
+    - ECMP entropy (non-UDP)
+  - - '-'
+    - Default SES
+    - rud_rod_default_ses.ksy
+    - 8B
+    - Default SES response
+  - - '-'
+    - NACK Codes
+    - nack_codes.ksy
+    - '-'
+    - NACK reason codes enum
+- type: table
+  title: PDS Protocol State Machines (16 files)
+  headers:
+  - Protocol
+  - KSY File
+  - UE Spec Section
+  - Description
+  rows:
+  - - PDC Establishment
+    - pdc_establishment.ksy
+    - 3.5.7
+    - PDC setup handshake
+  - - PDC Close
+    - pdc_close.ksy
+    - 3.5.7
+    - PDC teardown
+  - - PDC Initiator
+    - pdc_initiator.ksy
+    - 3.5.7
+    - Initiator state machine
+  - - PDC Target
+    - pdc_target.ksy
+    - 3.5.7
+    - Target state machine
+  - - PDS Manager
+    - pds_manager.ksy
+    - 3.5.7
+    - PDS management
+  - - RUD Delivery
+    - rud_delivery.ksy
+    - 3.5.10.3
+    - RUD delivery protocol
+  - - ROD Delivery
+    - rod_delivery.ksy
+    - 3.5.10.3
+    - ROD delivery protocol
+  - - RUDI Delivery
+    - rudi_delivery.ksy
+    - 3.5.10.9
+    - RUDI delivery protocol
+  - - Loss Detection CACK/SACK
+    - loss_detection_cack_sack.ksy
+    - 3.5.11
+    - Cumulative/Selective ACK
+  - - Loss Detection EV
+    - loss_detection_ev.ksy
+    - 3.5.11
+    - Early validation
+  - - Loss Detection NACK
+    - loss_detection_nack.ksy
+    - 3.5.11
+    - NACK-based detection
+  - - Loss Detection OOO
+    - loss_detection_ooo.ksy
+    - 3.5.11
+    - Out-of-order detection
+  - - Loss Detection Receiver
+    - loss_detection_receiver.ksy
+    - 3.5.11
+    - Receiver-side detection
+  - - Loss Detection RTO
+    - loss_detection_rto.ksy
+    - 3.5.11
+    - Retransmit timeout
+  - - Loss Detection Tail
+    - loss_detection_tail.ksy
+    - 3.5.11
+    - Tail loss detection
+  - - Loss Detection Trimming
+    - loss_detection_trimming.ksy
+    - 3.5.11
+    - Trimmed packet detection
+- type: section_header
+  title: SES Header Building Blocks
+  subtitle: Semantic Sublayer Format Definitions
+- type: table
+  title: SES Wire Formats (15 files)
+  headers:
+  - next_hdr
+  - Format
+  - KSY File
+  - Size
+  - Description
+  rows:
+  - - '0x0'
+    - Standard Request SOM=1
+    - standard_request_som1.ksy
+    - 44B
+    - Start of message
+  - - '0x1'
+    - Standard Request SOM=0
+    - standard_request_som0.ksy
+    - 16B
+    - Continuation
+  - - '0x2'
+    - Optimized Non-Matching
+    - optimized_non_matching.ksy
+    - 32B
+    - Optimized RMA
+  - - '0x3'
+    - Small Message
+    - small_message.ksy
+    - 32B
+    - Single-packet optimized
+  - - '0x3'
+    - Small RMA
+    - small_rma.ksy
+    - 32B
+    - Small RMA operations
+  - - '0x4'
+    - Response
+    - response.ksy
+    - 16B
+    - Standard response
+  - - '0x5'
+    - Response with Data
+    - response_with_data.ksy
+    - 24B
+    - Data-carrying response
+  - - '0x6'
+    - Optimized Response
+    - optimized_response_with_data.ksy
+    - 16B
+    - Optimized format
+  - - '-'
+    - Rendezvous Extension
+    - rendezvous_extension.ksy
+    - 32B
+    - Large message protocol
+  - - '-'
+    - Atomic Extension
+    - atomic_extension.ksy
+    - 8B
+    - Atomic operations
+  - - '-'
+    - CAS Extension
+    - cas_extension.ksy
+    - 40B
+    - Compare-and-swap
+  - - '-'
+    - Deferrable Send
+    - deferrable_send_request.ksy
+    - 44B
+    - Deferrable send request
+  - - '-'
+    - Ready to Restart
+    - ready_to_restart.ksy
+    - 44B
+    - RTR response
+  - - '-'
+    - Opcodes
+    - opcodes.ksy
+    - '-'
+    - SES opcode definitions
+  - - '-'
+    - Next Header Types
+    - next_header_types.ksy
+    - '-'
+    - Header type enum
+- type: table
+  title: SES Message Sequences (12 files)
+  headers:
+  - Sequence
+  - KSY File
+  - Description
+  rows:
+  - - Single Packet Request
+    - single_packet_request.ksy
+    - Single-packet message flow
+  - - Multi Packet Request
+    - multi_packet_request.ksy
+    - Multi-packet message flow
+  - - Read Standard
+    - read_standard.ksy
+    - Standard RDMA read
+  - - Read Large ACK
+    - read_large_ack.ksy
+    - Large read with ACK
+  - - Rendezvous Expected
+    - rendezvous_expected.ksy
+    - Rendezvous with posted receive
+  - - Rendezvous Unexpected
+    - rendezvous_unexpected.ksy
+    - Rendezvous without posted receive
+  - - Deferrable Expected
+    - deferrable_expected.ksy
+    - Deferrable with buffer
+  - - Deferrable Unexpected
+    - deferrable_unexpected.ksy
+    - Deferrable without buffer
+  - - Deferrable No Buffer
+    - deferrable_no_buffer.ksy
+    - Deferrable RTR flow
+  - - Buffered Messages
+    - buffered_messages.ksy
+    - Message buffering
+  - - Buffered Headers
+    - buffered_headers.ksy
+    - Header buffering
+  - - Backoff Retry
+    - backoff_retry.ksy
+    - Retry with backoff
+- type: section_header
+  title: CMS Header Building Blocks
+  subtitle: Congestion Management Sublayer Format Definitions
+- type: table
+  title: CMS Wire Formats (7 files)
+  headers:
+  - Format
+  - KSY File
+  - Size
+  - Description
+  rows:
+  - - ACK CC State NSCC
+    - ack_cc_state_nscc.ksy
+    - 8B
+    - NSCC congestion state
+  - - ACK CC State RCCC/TFC
+    - ack_cc_state_rccc_tfc.ksy
+    - 8B
+    - Credit-based CC state
+  - - Request CC State
+    - req_cc_state.ksy
+    - 8B
+    - Source CC state
+  - - Credit CP Payload
+    - credit_cp_payload.ksy
+    - Var
+    - Credit control packet
+  - - Credit Request Payload
+    - credit_request_cp_payload.ksy
+    - Var
+    - Credit request
+  - - CC Type
+    - cc_type.ksy
+    - '-'
+    - CC algorithm type enum
+  - - CCX Type
+    - ccx_type.ksy
+    - '-'
+    - Extended CC type enum
+- type: table
+  title: CMS Protocol State Machines (8 files)
+  headers:
+  - Protocol
+  - KSY File
+  - UE Spec Section
+  - Description
+  rows:
+  - - CCC State Machine
+    - ccc_state_machine.ksy
+    - 3.6.6
+    - Congestion Control Context
+  - - NSCC Source
+    - nscc_source.ksy
+    - 3.6.13.3-6
+    - NSCC source algorithm
+  - - NSCC Destination
+    - nscc_destination.ksy
+    - 3.6.13.9
+    - NSCC destination algorithm
+  - - RCCC Source
+    - rccc_source.ksy
+    - 3.6.14.2-4
+    - RCCC source algorithm
+  - - RCCC Destination
+    - rccc_destination.ksy
+    - 3.6.14.6
+    - RCCC destination algorithm
+  - - TFC Source
+    - tfc_source.ksy
+    - 3.6.15
+    - TFC source algorithm
+  - - TFC Destination
+    - tfc_destination.ksy
+    - 3.6.15
+    - TFC destination algorithm
+  - - Multipath Selection
+    - multipath_selection.ksy
+    - 3.6.16
+    - ECMP path selection
+- type: section_header
+  title: TSS Header Building Blocks
+  subtitle: Transport Security Sublayer Format Definitions
+- type: table
+  title: TSS Wire Formats (2 files)
+  headers:
+  - Format
+  - KSY File
+  - Size
+  - Description
+  rows:
+  - - Security Header
+    - security_header.ksy
+    - 12-16B
+    - AES-GCM encryption header
+  - - IV Construction
+    - iv_construction.ksy
+    - 12B
+    - Initialization vector
+- type: table
+  title: TSS Protocol State Machines (7 files)
+  headers:
+  - Protocol
+  - KSY File
+  - UE Spec Section
+  - Description
+  rows:
+  - - TSS TX Processing
+    - tss_tx_processing.ksy
+    - '3.7'
+    - Transmit encryption
+  - - TSS RX Processing
+    - tss_rx_processing.ksy
+    - '3.7'
+    - Receive decryption
+  - - Key Rotation
+    - key_rotation.ksy
+    - '3.7'
+    - Key rotation protocol
+  - - Join Secure Domain
+    - join_secure_domain.ksy
+    - '3.7'
+    - Domain join protocol
+  - - KDF Direct
+    - kdf_direct.ksy
+    - '3.7'
+    - Direct key derivation
+  - - KDF Client Server
+    - kdf_client_server.ksy
+    - '3.7'
+    - Client-server KDF
+  - - KDF Cluster
+    - kdf_cluster.ksy
+    - '3.7'
+    - Cluster KDF
+- type: section_header
+  title: Link Layer Building Blocks
+  subtitle: LLR, CBFC, and LLDP Format Definitions
+- type: table
+  title: LLR Wire Formats (6 files)
+  headers:
+  - Type
+  - Format
+  - KSY File
+  - Size
+  - Description
+  rows:
+  - - '0x01'
+    - LLR_ACK
+    - llr_ack_ctlos.ksy
+    - 8B
+    - Frame acknowledgment
+  - - '0x02'
+    - LLR_NACK
+    - llr_nack_ctlos.ksy
+    - 8B
+    - Negative acknowledgment
+  - - '0x03'
+    - LLR_INIT
+    - llr_init_ctlos.ksy
+    - 8B
+    - Initialize sequence state
+  - - '0x04'
+    - LLR_INIT_ECHO
+    - llr_init_echo_ctlos.ksy
+    - 8B
+    - Confirm initialization
+  - - '-'
+    - Preamble MII
+    - llr_preamble_mii.ksy
+    - 8B
+    - MII preamble format
+  - - '-'
+    - Preamble 64B/66B
+    - llr_preamble_64b66b.ksy
+    - 8B
+    - 64B/66B preamble format
+- type: table
+  title: LLR Protocol State Machines (3 files)
+  headers:
+  - Protocol
+  - KSY File
+  - UE Spec Section
+  - Description
+  rows:
+  - - LLR Transmit
+    - llr_transmit_sm.ksy
+    - '5.1'
+    - Transmit state machine
+  - - LLR Receive
+    - llr_receive.ksy
+    - '5.1'
+    - Receive state machine
+  - - ACK/NACK Transmit
+    - ack_nack_transmit_sm.ksy
+    - '5.1'
+    - ACK/NACK generation
+- type: table
+  title: CBFC Wire Formats (2 files)
+  headers:
+  - Format
+  - KSY File
+  - Size
+  - Description
+  rows:
+  - - CF_Update
+    - cf_update.ksy
+    - 8B
+    - Credit freed (CtlOS)
+  - - CC_Update
+    - cc_update.ksy
+    - 8B
+    - Credit consumed (Ethernet)
+- type: table
+  title: CBFC Protocol State Machines (3 files)
+  headers:
+  - Protocol
+  - KSY File
+  - UE Spec Section
+  - Description
+  rows:
+  - - VC State Machine
+    - vc_state_machine.ksy
+    - '5.2'
+    - Virtual channel state
+  - - Lossless VC Init
+    - lossless_vc_init.ksy
+    - '5.2'
+    - Lossless VC initialization
+  - - Lossless VC Removal
+    - lossless_vc_removal.ksy
+    - '5.2'
+    - Lossless VC removal
+- type: table
+  title: LLDP TLV Formats (3 files)
+  headers:
+  - Format
+  - KSY File
+  - Description
+  rows:
+  - - Link Negotiation TLV
+    - ue_link_negotiation_tlv.ksy
+    - LLR/CBFC enable flags
+  - - CBFC TLV
+    - ue_cbfc_tlv.ksy
+    - VC configuration
+  - - Link Negotiation SM
+    - link_negotiation_sm.ksy
+    - Negotiation state machine
+- type: section_header
+  title: Network and Physical Layer
+  subtitle: Network Formats and Physical Layer Definitions
+- type: table
+  title: Network Layer Formats (4 files)
+  headers:
+  - Format
+  - KSY File
+  - Description
+  rows:
+  - - DSCP Categories
+    - dscp_categories.ksy
+    - DSCP category mappings
+  - - Packet Trimming
+    - packet_trimming.ksy
+    - Trimming mechanism
+  - - UFH 16-bit
+    - ufh_16.ksy
+    - 16-bit UE Fabric Header
+  - - UFH 32-bit
+    - ufh_32.ksy
+    - 32-bit UE Fabric Header
+- type: table
+  title: Physical Layer Formats (1 file)
+  headers:
+  - Format
+  - KSY File
+  - Description
+  rows:
+  - - Control Ordered Sets
+    - control_ordered_sets.ksy
+    - 64B/66B CtlOS encoding
+- type: section_header
+  title: PDS Packet Variant Matrix
+  subtitle: Delivery Modes and Response Types
+- type: table
+  title: PDS Delivery Modes
+  headers:
+  - Mode
+  - Type
+  - Reliability
+  - Ordering
+  - Use Case
+  rows:
+  - - RUD
+    - '0x01'
+    - Reliable
+    - Unordered
+    - General RDMA
+  - - ROD
+    - '0x02'
+    - Reliable
+    - Ordered
+    - Streaming, multi-packet
+  - - RUDI
+    - 0x04/0x05
+    - Reliable
+    - Unordered
+    - Idempotent operations
+  - - UUD
+    - '0x06'
+    - Unreliable
+    - Unordered
+    - Best-effort traffic
+- type: table
+  title: PDS Request/Response Mapping
+  headers:
+  - Request Type
+  - Possible Responses
+  - KSY Files
+  rows:
+  - - RUD Request (0x01)
+    - ACK, ACK_CC, ACK_CCX, NACK, NACK_CCX
+    - rud_rod_request.ksy, rud_rod_ack.ksy, ack_cc.ksy, ack_ccx.ksy, nack.ksy, nack_ccx.ksy
+  - - ROD Request (0x02)
+    - ACK, ACK_CC, ACK_CCX, NACK, NACK_CCX
+    - rud_rod_request.ksy, rud_rod_ack.ksy, ack_cc.ksy, ack_ccx.ksy, nack.ksy, nack_ccx.ksy
+  - - RUDI Request (0x04)
+    - RUDI Response, NACK
+    - rudi_request_response.ksy, nack.ksy
+  - - UUD Request (0x06)
+    - (no response)
+    - uud_request.ksy
+  - - Control Packet (0x0B)
+    - (varies by subtype)
+    - rud_rod_cp.ksy
+- type: table
+  title: Control Packet Subtypes
+  headers:
+  - ctl_type
+  - Name
+  - Direction
+  - Description
+  rows:
+  - - '0'
+    - NOOP
+    - Either
+    - No operation
+  - - '1'
+    - ACK_REQUEST
+    - Src->Dst
+    - Request ACK for specific PSN
+  - - '2'
+    - CLEAR_COMMAND
+    - Init->Tgt
+    - Clear guaranteed delivery state
+  - - '3'
+    - CLEAR_REQUEST
+    - Tgt->Init
+    - Request initiator to send clear
+  - - '4'
+    - CLOSE_COMMAND
+    - Init->Tgt
+    - PDC is being closed
+  - - '5'
+    - CLOSE_REQUEST
+    - Tgt->Init
+    - Request initiator to close PDC
+  - - '6'
+    - PROBE
+    - Src->Dst
+    - Request PDS ACK
+  - - '7'
+    - CREDIT
+    - Dst->Src
+    - Carry CC credit
+  - - '8'
+    - CREDIT_REQUEST
+    - Src->Dst
+    - Request credit
+  - - '9'
+    - NEGOTIATION
+    - Either
+    - PDC negotiation
+- type: section_header
+  title: SES Packet Variant Matrix
+  subtitle: Operation Types and Header Formats
+- type: table
+  title: SES Request Opcodes
+  headers:
+  - Opcode
+  - Value
+  - KSY File
+  - Description
+  rows:
+  - - Tagged Send
+    - '0x00'
+    - standard_request_som1.ksy
+    - Send with tag matching
+  - - RMA Write
+    - '0x01'
+    - standard_request_som1.ksy
+    - Remote memory write
+  - - RMA Read
+    - '0x02'
+    - standard_request_som1.ksy
+    - Remote memory read
+  - - Atomic Write
+    - '0x03'
+    - atomic_extension.ksy
+    - Atomic memory write
+  - - Atomic Read
+    - '0x04'
+    - atomic_extension.ksy
+    - Atomic memory read
+  - - Atomic CAS
+    - '0x05'
+    - cas_extension.ksy
+    - Compare-and-swap
+  - - Deferrable Send
+    - '0x06'
+    - deferrable_send_request.ksy
+    - Deferrable send
+  - - Ready to Restart
+    - '0x07'
+    - ready_to_restart.ksy
+    - Restart notification
+  - - Small Message
+    - '0x08'
+    - small_message.ksy
+    - Small message (32B header)
+  - - Small RMA Write
+    - '0x09'
+    - small_rma.ksy
+    - Small RMA write
+  - - Small RMA Read
+    - '0x0A'
+    - small_rma.ksy
+    - Small RMA read
+  - - Small Atomic Write
+    - '0x0B'
+    - atomic_extension.ksy
+    - Small atomic write
+  - - Small Atomic Read
+    - '0x0C'
+    - atomic_extension.ksy
+    - Small atomic read
+  - - Small Atomic CAS
+    - '0x0D'
+    - cas_extension.ksy
+    - Small atomic CAS
+- type: table
+  title: SES Response Opcodes
+  headers:
+  - Opcode
+  - Value
+  - KSY File
+  - Description
+  rows:
+  - - Response
+    - '0x00'
+    - response.ksy
+    - Standard response
+  - - Response with Data
+    - '0x01'
+    - response_with_data.ksy
+    - Response carrying data
+  - - Optimized Response
+    - '0x02'
+    - optimized_response_with_data.ksy
+    - Optimized format
+  - - NACK
+    - '0x03'
+    - response.ksy
+    - Negative acknowledgment
+- type: section_header
+  title: Detailed Packet Structures
+  subtitle: Wire Format Diagrams
+- type: code_block
+  title: PDS Prologue (2 bytes) - prologue.ksy
+  language: text
+  code: '+-------+-------+-------+-------+-------+-------+-------+-------+
+
+    | Byte 0                        | Byte 1                        |
+
+    +-------+-------+-------+-------+-------+-------+-------+-------+
+
+    | type[4:0] | next_hdr/ctl[3:0] | flags[6:0]                    |
+
+    +-------+-------+-------+-------+-------+-------+-------+-------+
+
+    '
+- type: code_block
+  title: RUD/ROD Request (12 bytes) - rud_rod_request.ksy
+  language: text
+  code: "Byte:    0       1       2       3       4       5       6       7\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |type |nxt|flg|       clear_psn_offset |         PSN [31:0]    ->\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \         8       9      10      11\n     +-------+-------+-------+-------+\n   -> |    spdcid     |    dpdcid     |\n\
+    \     +-------+-------+-------+-------+\n"
+- type: code_block
+  title: ACK_CC (28 bytes) - ack_cc.ksy
+  language: text
+  code: "Byte:    0       1       2       3       4       5       6       7\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |                    ACK Header (12 bytes)                      |\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \         8       9      10      11      12      13      14      15\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |  (ACK cont'd) |cc_typ|cc_flg|  mpr  | sack_psn_offset       ->\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \        16      17      18      19      20      21      22      23\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \   -> |              sack_bitmap [63:0]                               |\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \        24      25      26      27\n     +-------+-------+-------+-------+\n     |       ack_cc_state [63:0]     |\n\
+    \     +-------+-------+-------+-------+\n"
+- type: code_block
+  title: SES Standard Request SOM=1 (44 bytes) - standard_request_som1.ksy
+  language: text
+  code: "Byte:    0       1       2       3       4       5       6       7\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |rs|opcode |v|dc|ie|rl|hd|eo|so|    message_id     | ri_gen  ->\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \         8       9      10      11      12      13      14      15\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \   -> |      job_id [23:0]    |rsvd|pid_on_fep |rsvd| resource_idx  ->\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \        16      17      18      19      20      21      22      23\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \   -> |                    buffer_offset [63:0]                       |\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \        24      25      26      27      28      29      30      31\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |        initiator [31:0]       |   match_bits / memory_key    ->\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \        32      33      34      35      36      37      38      39\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \   -> |  (match_bits cont'd) [63:0]   |       header_data [63:0]     ->\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \        40      41      42      43\n     +-------+-------+-------+-------+\n   -> | (hdr_data)    | request_length|\n\
+    \     +-------+-------+-------+-------+\n"
+- type: code_block
+  title: TSS Security Header (16 bytes, sp=1) - security_header.ksy
+  language: text
+  code: "Byte:    0       1       2       3       4       5       6       7\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |type|sp|r|an|         sdi [23:0]        |      ssi [31:0]     |\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \         8       9      10      11      12      13      14      15\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     |                        tsc [63:0]                             |\n     |              epoch [15:0]  |        counter\
+    \ [47:0]            |\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n"
+- type: code_block
+  title: LLR_ACK CtlOS (8 bytes) - llr_ack_ctlos.ksy
+  language: text
+  code: "64B/66B Block (Sync Header = 2'b10):\nByte:    0       1       2       3       4       5       6       7\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     | 0x4B  | 0x01  |ack_nack_seq   |seq_lo |  Rsvd |  Rsvd |  Rsvd |\n     | (BTF) | (ACK) | [19:12]|[11:4]|+O-code|\
+    \       |       |       |\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n       D0      D1 \
+    \     D2      D3      D4      D5      D6      D7\n"
+- type: code_block
+  title: CF_Update CtlOS (8 bytes) - cf_update.ksy
+  language: text
+  code: "64B/66B Block (Sync Header = 2'b10):\nByte:    0       1       2       3       4       5       6       7\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n\
+    \     | 0x5C  | 0x10  |CF1_VC |CF1_cnt|CF1_cnt|CF2_VC |CF2_cnt|CF2_cnt|\n     | (Ctrl)| (Type)|+cnt_hi| [10:3]|lo+Ocd\
+    \ |+cnt_hi| [10:3]|lo+Rsvd|\n     +-------+-------+-------+-------+-------+-------+-------+-------+\n       D0      D1\
+    \      D2      D3      D4      D5      D6      D7\n"
+- type: section_header
+  title: State Machines Summary
+  subtitle: 38 Protocol State Machines Across All Sublayers
+- type: table
+  title: Transport Layer State Machines (31 files)
+  headers:
+  - Sublayer
+  - State Machine
+  - KSY File
+  - States
+  rows:
+  - - PDS
+    - PDC Establishment
+    - pdc_establishment.ksy
+    - IDLE, SYN_SENT, SYN_RCVD, ESTABLISHED
+  - - PDS
+    - PDC Close
+    - pdc_close.ksy
+    - ESTABLISHED, CLOSE_WAIT, LAST_ACK, CLOSED
+  - - PDS
+    - PDC Initiator
+    - pdc_initiator.ksy
+    - IDLE, CONNECTING, CONNECTED, CLOSING
+  - - PDS
+    - PDC Target
+    - pdc_target.ksy
+    - IDLE, LISTENING, CONNECTED, CLOSING
+  - - PDS
+    - PDS Manager
+    - pds_manager.ksy
+    - INIT, ACTIVE, SHUTDOWN
+  - - PDS
+    - RUD Delivery
+    - rud_delivery.ksy
+    - IDLE, SENDING, WAITING_ACK, COMPLETE
+  - - PDS
+    - ROD Delivery
+    - rod_delivery.ksy
+    - IDLE, SENDING, WAITING_ACK, COMPLETE
+  - - PDS
+    - RUDI Delivery
+    - rudi_delivery.ksy
+    - IDLE, SENDING, WAITING_RESPONSE
+  - - PDS
+    - Loss Detection CACK/SACK
+    - loss_detection_cack_sack.ksy
+    - MONITOR, DETECT, RETRANSMIT
+  - - PDS
+    - Loss Detection EV
+    - loss_detection_ev.ksy
+    - MONITOR, VALIDATE, SIGNAL
+  - - PDS
+    - Loss Detection NACK
+    - loss_detection_nack.ksy
+    - MONITOR, NACK_RCVD, RETRANSMIT
+  - - PDS
+    - Loss Detection OOO
+    - loss_detection_ooo.ksy
+    - MONITOR, OOO_DETECT, SIGNAL
+  - - PDS
+    - Loss Detection Receiver
+    - loss_detection_receiver.ksy
+    - MONITOR, GAP_DETECT, NACK_SEND
+  - - PDS
+    - Loss Detection RTO
+    - loss_detection_rto.ksy
+    - IDLE, TIMER_RUNNING, TIMEOUT
+  - - PDS
+    - Loss Detection Tail
+    - loss_detection_tail.ksy
+    - MONITOR, TAIL_DETECT, PROBE
+  - - PDS
+    - Loss Detection Trimming
+    - loss_detection_trimming.ksy
+    - MONITOR, TRIM_DETECT, RETRANSMIT
+  - - CMS
+    - CCC State Machine
+    - ccc_state_machine.ksy
+    - IDLE, ACTIVE, READY, PENDING
+  - - CMS
+    - NSCC Source
+    - nscc_source.ksy
+    - IDLE, SLOW_START, CONG_AVOID, FAST_RECOVERY
+  - - CMS
+    - NSCC Destination
+    - nscc_destination.ksy
+    - IDLE, MONITOR, SIGNAL_CONGESTION
+  - - CMS
+    - RCCC Source
+    - rccc_source.ksy
+    - IDLE, RATE_CONTROL, BACKOFF
+  - - CMS
+    - RCCC Destination
+    - rccc_destination.ksy
+    - IDLE, MONITOR_BUFFER, REQUEST_REDUCTION
+  - - CMS
+    - TFC Source
+    - tfc_source.ksy
+    - IDLE, FLOW_CONTROL, THROTTLE
+  - - CMS
+    - TFC Destination
+    - tfc_destination.ksy
+    - IDLE, MONITOR, SIGNAL_THROTTLE
+  - - CMS
+    - Multipath Selection
+    - multipath_selection.ksy
+    - IDLE, SELECT_PATH, MONITOR_PATHS
+  - - TSS
+    - TSS TX Processing
+    - tss_tx_processing.ksy
+    - IDLE, ENCRYPT, SEND
+  - - TSS
+    - TSS RX Processing
+    - tss_rx_processing.ksy
+    - IDLE, DECRYPT, VALIDATE
+  - - TSS
+    - Key Rotation
+    - key_rotation.ksy
+    - ACTIVE, ROTATING, COMPLETE
+  - - TSS
+    - Join Secure Domain
+    - join_secure_domain.ksy
+    - INIT, JOINING, JOINED
+  - - TSS
+    - KDF Direct
+    - kdf_direct.ksy
+    - INIT, DERIVE, COMPLETE
+  - - TSS
+    - KDF Client Server
+    - kdf_client_server.ksy
+    - INIT, REQUEST, RECEIVE, COMPLETE
+  - - TSS
+    - KDF Cluster
+    - kdf_cluster.ksy
+    - INIT, DISTRIBUTE, COMPLETE
+- type: table
+  title: Link Layer State Machines (7 files)
+  headers:
+  - Sublayer
+  - State Machine
+  - KSY File
+  - States
+  rows:
+  - - LLR
+    - LLR Transmit
+    - llr_transmit_sm.ksy
+    - IDLE, TRANSMIT, WAIT_ACK, RETRANSMIT
+  - - LLR
+    - LLR Receive
+    - llr_receive.ksy
+    - IDLE, RECEIVE, VALIDATE, DELIVER
+  - - LLR
+    - ACK/NACK Transmit
+    - ack_nack_transmit_sm.ksy
+    - IDLE, GENERATE, SEND
+  - - CBFC
+    - VC State Machine
+    - vc_state_machine.ksy
+    - INIT, ACTIVE, PAUSED, SHUTDOWN
+  - - CBFC
+    - Lossless VC Init
+    - lossless_vc_init.ksy
+    - INIT, NEGOTIATE, ACTIVE
+  - - CBFC
+    - Lossless VC Removal
+    - lossless_vc_removal.ksy
+    - ACTIVE, DRAINING, REMOVED
+  - - LLDP
+    - Link Negotiation
+    - link_negotiation_sm.ksy
+    - INIT, NEGOTIATE, COMPLETE
+- type: section_header
+  title: Header Overhead Summary
+  subtitle: Packet Size Analysis
+- type: table
+  title: Minimum Header Sizes by Delivery Mode
+  headers:
+  - Delivery Mode
+  - PDS Header
+  - SES Header
+  - Total Overhead
+  - KSY Files
+  rows:
+  - - RUD (standard)
+    - 12B
+    - 44B (SOM=1)
+    - 56B
+    - rud_rod_request.ksy, standard_request_som1.ksy
+  - - RUD (continuation)
+    - 12B
+    - 16B (SOM=0)
+    - 28B
+    - rud_rod_request.ksy, standard_request_som0.ksy
+  - - RUD (small msg)
+    - 12B
+    - 32B
+    - 44B
+    - rud_rod_request.ksy, small_message.ksy
+  - - RUD with CC
+    - 28B
+    - 44B (SOM=1)
+    - 72B
+    - rud_rod_request_cc.ksy, standard_request_som1.ksy
+  - - RUDI
+    - 6B
+    - 44B (SOM=1)
+    - 50B
+    - rudi_request_response.ksy, standard_request_som1.ksy
+  - - UUD
+    - 6B
+    - 44B (SOM=1)
+    - 50B
+    - uud_request.ksy, standard_request_som1.ksy
+- type: table
+  title: Response Header Sizes
+  headers:
+  - Response Type
+  - PDS Header
+  - SES Header
+  - Total
+  - KSY Files
+  rows:
+  - - ACK
+    - 12B
+    - '-'
+    - 12B
+    - rud_rod_ack.ksy
+  - - ACK_CC
+    - 28B
+    - '-'
+    - 28B
+    - ack_cc.ksy
+  - - ACK_CCX
+    - 44B
+    - '-'
+    - 44B
+    - ack_ccx.ksy
+  - - NACK
+    - 12B
+    - '-'
+    - 12B
+    - nack.ksy
+  - - NACK_CCX
+    - 28B
+    - '-'
+    - 28B
+    - nack_ccx.ksy
+  - - SES Response
+    - 12B
+    - 16B
+    - 28B
+    - rud_rod_ack.ksy, response.ksy
+  - - SES Response w/Data
+    - 12B
+    - 24B
+    - 36B
+    - rud_rod_ack.ksy, response_with_data.ksy
+  - - RUDI Response
+    - 6B
+    - 16B
+    - 22B
+    - rudi_request_response.ksy, response.ksy
+- type: section_header
+  title: Complete Datamodel Coverage
+  subtitle: All 103 UE KSY Files
+- type: table
+  title: transport/pds/ (30 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - prologue.ksy
+    - PDS header prologue (2B)
+  - - Format
+    - rud_rod_request.ksy
+    - RUD/ROD request (12B)
+  - - Format
+    - rud_rod_request_cc.ksy
+    - RUD/ROD request with CC (28B)
+  - - Format
+    - rudi_request_response.ksy
+    - RUDI request/response (6B)
+  - - Format
+    - uud_request.ksy
+    - UUD request (6B)
+  - - Format
+    - rud_rod_ack.ksy
+    - ACK (12B)
+  - - Format
+    - ack_cc.ksy
+    - ACK_CC (28B)
+  - - Format
+    - ack_ccx.ksy
+    - ACK_CCX (44B)
+  - - Format
+    - nack.ksy
+    - NACK (12B)
+  - - Format
+    - nack_ccx.ksy
+    - NACK_CCX (28B)
+  - - Format
+    - nack_codes.ksy
+    - NACK reason codes
+  - - Format
+    - rud_rod_cp.ksy
+    - Control packet (12B)
+  - - Format
+    - entropy_header.ksy
+    - Entropy header (4B)
+  - - Format
+    - rud_rod_default_ses.ksy
+    - Default SES response (8B)
+  - - Protocol
+    - pdc_establishment.ksy
+    - PDC establishment SM
+  - - Protocol
+    - pdc_close.ksy
+    - PDC close SM
+  - - Protocol
+    - pdc_initiator.ksy
+    - PDC initiator SM
+  - - Protocol
+    - pdc_target.ksy
+    - PDC target SM
+  - - Protocol
+    - pds_manager.ksy
+    - PDS manager SM
+  - - Protocol
+    - rud_delivery.ksy
+    - RUD delivery SM
+  - - Protocol
+    - rod_delivery.ksy
+    - ROD delivery SM
+  - - Protocol
+    - rudi_delivery.ksy
+    - RUDI delivery SM
+  - - Protocol
+    - loss_detection_cack_sack.ksy
+    - CACK/SACK loss detection
+  - - Protocol
+    - loss_detection_ev.ksy
+    - Early validation loss detection
+  - - Protocol
+    - loss_detection_nack.ksy
+    - NACK loss detection
+  - - Protocol
+    - loss_detection_ooo.ksy
+    - OOO loss detection
+  - - Protocol
+    - loss_detection_receiver.ksy
+    - Receiver loss detection
+  - - Protocol
+    - loss_detection_rto.ksy
+    - RTO loss detection
+  - - Protocol
+    - loss_detection_tail.ksy
+    - Tail loss detection
+  - - Protocol
+    - loss_detection_trimming.ksy
+    - Trimming loss detection
+- type: table
+  title: transport/ses/ (27 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - standard_request_som1.ksy
+    - Standard request SOM=1 (44B)
+  - - Format
+    - standard_request_som0.ksy
+    - Standard request SOM=0 (16B)
+  - - Format
+    - optimized_non_matching.ksy
+    - Optimized non-matching (32B)
+  - - Format
+    - small_message.ksy
+    - Small message (32B)
+  - - Format
+    - small_rma.ksy
+    - Small RMA (32B)
+  - - Format
+    - response.ksy
+    - Response (16B)
+  - - Format
+    - response_with_data.ksy
+    - Response with data (24B)
+  - - Format
+    - optimized_response_with_data.ksy
+    - Optimized response (16B)
+  - - Format
+    - rendezvous_extension.ksy
+    - Rendezvous extension (32B)
+  - - Format
+    - atomic_extension.ksy
+    - Atomic extension (8B)
+  - - Format
+    - cas_extension.ksy
+    - CAS extension (40B)
+  - - Format
+    - deferrable_send_request.ksy
+    - Deferrable send (44B)
+  - - Format
+    - ready_to_restart.ksy
+    - Ready to restart (44B)
+  - - Format
+    - opcodes.ksy
+    - SES opcodes
+  - - Format
+    - next_header_types.ksy
+    - Next header types
+  - - Sequence
+    - single_packet_request.ksy
+    - Single packet request
+  - - Sequence
+    - multi_packet_request.ksy
+    - Multi packet request
+  - - Sequence
+    - read_standard.ksy
+    - Standard read
+  - - Sequence
+    - read_large_ack.ksy
+    - Large read with ACK
+  - - Sequence
+    - rendezvous_expected.ksy
+    - Rendezvous expected
+  - - Sequence
+    - rendezvous_unexpected.ksy
+    - Rendezvous unexpected
+  - - Sequence
+    - deferrable_expected.ksy
+    - Deferrable expected
+  - - Sequence
+    - deferrable_unexpected.ksy
+    - Deferrable unexpected
+  - - Sequence
+    - deferrable_no_buffer.ksy
+    - Deferrable no buffer
+  - - Sequence
+    - buffered_messages.ksy
+    - Buffered messages
+  - - Sequence
+    - buffered_headers.ksy
+    - Buffered headers
+  - - Sequence
+    - backoff_retry.ksy
+    - Backoff retry
+- type: table
+  title: transport/cms/ (15 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - ack_cc_state_nscc.ksy
+    - NSCC CC state (8B)
+  - - Format
+    - ack_cc_state_rccc_tfc.ksy
+    - RCCC/TFC CC state (8B)
+  - - Format
+    - req_cc_state.ksy
+    - Request CC state (8B)
+  - - Format
+    - credit_cp_payload.ksy
+    - Credit CP payload
+  - - Format
+    - credit_request_cp_payload.ksy
+    - Credit request payload
+  - - Format
+    - cc_type.ksy
+    - CC type enum
+  - - Format
+    - ccx_type.ksy
+    - CCX type enum
+  - - Protocol
+    - ccc_state_machine.ksy
+    - CCC state machine
+  - - Protocol
+    - nscc_source.ksy
+    - NSCC source
+  - - Protocol
+    - nscc_destination.ksy
+    - NSCC destination
+  - - Protocol
+    - rccc_source.ksy
+    - RCCC source
+  - - Protocol
+    - rccc_destination.ksy
+    - RCCC destination
+  - - Protocol
+    - tfc_source.ksy
+    - TFC source
+  - - Protocol
+    - tfc_destination.ksy
+    - TFC destination
+  - - Protocol
+    - multipath_selection.ksy
+    - Multipath selection
+- type: table
+  title: transport/tss/ (9 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - security_header.ksy
+    - Security header (12-16B)
+  - - Format
+    - iv_construction.ksy
+    - IV construction (12B)
+  - - Protocol
+    - tss_tx_processing.ksy
+    - TX processing
+  - - Protocol
+    - tss_rx_processing.ksy
+    - RX processing
+  - - Protocol
+    - key_rotation.ksy
+    - Key rotation
+  - - Protocol
+    - join_secure_domain.ksy
+    - Join secure domain
+  - - Protocol
+    - kdf_direct.ksy
+    - KDF direct
+  - - Protocol
+    - kdf_client_server.ksy
+    - KDF client-server
+  - - Protocol
+    - kdf_cluster.ksy
+    - KDF cluster
+- type: table
+  title: link/llr/ (9 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - llr_ack_ctlos.ksy
+    - LLR_ACK CtlOS (8B)
+  - - Format
+    - llr_nack_ctlos.ksy
+    - LLR_NACK CtlOS (8B)
+  - - Format
+    - llr_init_ctlos.ksy
+    - LLR_INIT CtlOS (8B)
+  - - Format
+    - llr_init_echo_ctlos.ksy
+    - LLR_INIT_ECHO CtlOS (8B)
+  - - Format
+    - llr_preamble_mii.ksy
+    - LLR preamble MII (8B)
+  - - Format
+    - llr_preamble_64b66b.ksy
+    - LLR preamble 64B/66B (8B)
+  - - Protocol
+    - llr_transmit_sm.ksy
+    - LLR transmit SM
+  - - Protocol
+    - llr_receive.ksy
+    - LLR receive SM
+  - - Protocol
+    - ack_nack_transmit_sm.ksy
+    - ACK/NACK transmit SM
+- type: table
+  title: link/cbfc/ (5 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - cf_update.ksy
+    - CF_Update CtlOS (8B)
+  - - Format
+    - cc_update.ksy
+    - CC_Update message (8B)
+  - - Protocol
+    - vc_state_machine.ksy
+    - VC state machine
+  - - Protocol
+    - lossless_vc_init.ksy
+    - Lossless VC init
+  - - Protocol
+    - lossless_vc_removal.ksy
+    - Lossless VC removal
+- type: table
+  title: link/lldp/ (3 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - ue_link_negotiation_tlv.ksy
+    - Link negotiation TLV
+  - - Format
+    - ue_cbfc_tlv.ksy
+    - CBFC TLV
+  - - Protocol
+    - link_negotiation_sm.ksy
+    - Link negotiation SM
+- type: table
+  title: network/ (4 files)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - dscp_categories.ksy
+    - DSCP categories
+  - - Format
+    - packet_trimming.ksy
+    - Packet trimming
+  - - Format
+    - ufh_16.ksy
+    - UFH 16-bit
+  - - Format
+    - ufh_32.ksy
+    - UFH 32-bit
+- type: table
+  title: physical/ (1 file)
+  headers:
+  - Category
+  - File
+  - Description
+  rows:
+  - - Format
+    - control_ordered_sets.ksy
+    - Control Ordered Sets
+- type: section_header
+  title: Detailed Header Formats
+  subtitle: Field-level documentation with packet diagrams
+- type: section_header
+  title: LLR Preamble 64B/66B Block Format
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: llr_preamble_64b66b Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                sequence_number                | control_flags|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           reserved                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: llr_preamble_64b66b Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - sequence_number
+    - '24'
+    - '0'
+    - b24
+    - Sequence number (24 bits). LLR frame sequence number.
+  - - control_flags
+    - '8'
+    - '24'
+    - u1
+    - Control flags (8 bits). LLR-specific control.
+  - - reserved
+    - '32'
+    - '32'
+    - ''
+    - Reserved (32 bits). MUST be 0.
+- type: section_header
+  title: LLR_ACK Control Ordered Set (CtlOS)
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: llr_ack_ctlos Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  block_type   |  ctlos_type   |ack_nack_seq_hi|ack_nack_seq_m|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |ack_nack_seq_lo|  reserved_d5  |  reserved_d6  |  reserved_d7 |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: llr_ack_ctlos Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - block_type
+    - '8'
+    - '0'
+    - u1
+    - Block Type Field for 64B/66B control block.
+  - - ctlos_type
+    - '8'
+    - '8'
+    - u1
+    - CtlOS Message Type identifier.
+  - - ack_nack_seq_high
+    - '8'
+    - '16'
+    - u1
+    - ACK/NACK sequence number bits [19:12] (upper 8 bits).
+  - - ack_nack_seq_mid
+    - '8'
+    - '24'
+    - u1
+    - ACK/NACK sequence number bits [11:4] (middle 8 bits).
+  - - ack_nack_seq_low_and_ocode
+    - '8'
+    - '32'
+    - u1
+    - 'Combined field containing:'
+  - - reserved_d5
+    - '8'
+    - '40'
+    - u1
+    - Reserved field. MUST be 0x00.
+  - - reserved_d6
+    - '8'
+    - '48'
+    - u1
+    - Reserved field. MUST be 0x00.
+  - - reserved_d7
+    - '8'
+    - '56'
+    - u1
+    - Reserved field. MUST be 0x00.
+- type: section_header
+  title: LLR_NACK Control Ordered Set (CtlOS)
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: llr_nack_ctlos Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  block_type   |  ctlos_type   |ack_nack_seq_hi|ack_nack_seq_m|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |ack_nack_seq_lo|  reserved_d5  |  reserved_d6  |  reserved_d7 |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: llr_nack_ctlos Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - block_type
+    - '8'
+    - '0'
+    - u1
+    - Block Type Field for 64B/66B control block. MUST be 0x4B.
+  - - ctlos_type
+    - '8'
+    - '8'
+    - u1
+    - CtlOS Message Type identifier. MUST be 0x02 for LLR_NACK.
+  - - ack_nack_seq_high
+    - '8'
+    - '16'
+    - u1
+    - ACK/NACK sequence number bits [19:12] (upper 8 bits).
+  - - ack_nack_seq_mid
+    - '8'
+    - '24'
+    - u1
+    - ACK/NACK sequence number bits [11:4] (middle 8 bits).
+  - - ack_nack_seq_low_and_ocode
+    - '8'
+    - '32'
+    - u1
+    - 'Combined field: ack_nack_seq[3:0] (upper nibble) + O-code (l'
+  - - reserved_d5
+    - '8'
+    - '40'
+    - u1
+    - Reserved field. MUST be 0x00.
+  - - reserved_d6
+    - '8'
+    - '48'
+    - u1
+    - Reserved field. MUST be 0x00.
+  - - reserved_d7
+    - '8'
+    - '56'
+    - u1
+    - Reserved field. MUST be 0x00.
+- type: section_header
+  title: CBFC CF_Update Control Ordered Set (CtlOS)
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: cbfc_cf_update Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    | control_char  | message_type  |cf1_vc_and_coun| cf1_count_mid|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |cf1_count_low_a|cf2_vc_and_coun| cf2_count_mid |cf2_count_low_|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: cbfc_cf_update Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - control_char
+    - '8'
+    - '0'
+    - u1
+    - Control character value for UE control ordered set.
+  - - message_type
+    - '8'
+    - '8'
+    - u1
+    - CtlOS Message Type identifier.
+  - - cf1_vc_and_count_high
+    - '8'
+    - '16'
+    - u1
+    - 'Combined field containing:'
+  - - cf1_count_mid
+    - '8'
+    - '24'
+    - u1
+    - CF1 credit count bits [10:3] (middle 8 bits of 15-bit count)
+  - - cf1_count_low_and_ocode
+    - '8'
+    - '32'
+    - u1
+    - 'Combined field containing:'
+  - - cf2_vc_and_count_high
+    - '8'
+    - '40'
+    - u1
+    - 'Combined field containing:'
+  - - cf2_count_mid
+    - '8'
+    - '48'
+    - u1
+    - CF2 credit count bits [10:3] (middle 8 bits of 15-bit count)
+  - - cf2_count_low_and_reserved
+    - '8'
+    - '56'
+    - u1
+    - 'Combined field containing:'
+- type: section_header
+  title: CBFC CC_Update Message
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: cbfc_cc_update Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    | message_type  |vc_index_and_cc|cc_counter_mid |cc_counter_low|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           reserved                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: cbfc_cc_update Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - message_type
+    - '8'
+    - '0'
+    - u1
+    - Message type identifier for CC_Update.
+  - - vc_index_and_cc_high
+    - '8'
+    - '8'
+    - u1
+    - 'Combined field:'
+  - - cc_counter_mid
+    - '8'
+    - '16'
+    - u1
+    - CC counter middle 8 bits.
+  - - cc_counter_low
+    - '8'
+    - '24'
+    - u1
+    - CC counter lower 4 bits (upper nibble).
+  - - reserved
+    - '32'
+    - '32'
+    - ''
+    - Reserved (32 bits). MUST be 0.
+- type: section_header
+  title: UE Link Negotiation Options TLV
+  subtitle: 5 bytes (40 bits)
+- type: code_block
+  title: ue_link_negotiation_tlv Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  tlv_type   |   tlv_length    |    subtype    |l|c| reserved |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  ue_version                                                  |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ue_link_negotiation_tlv Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - tlv_type
+    - '7'
+    - '0'
+    - b7
+    - TLV Type = 127 (Organizationally Specific TLV).
+  - - tlv_length
+    - '9'
+    - '7'
+    - b9
+    - TLV Length in octets (variable, includes OUI + Subtype + Val
+  - - oui
+    - '0'
+    - '16'
+    - u3
+    - 'Organizationally Unique Identifier (OUI) for Ultra Ethernet '
+  - - subtype
+    - '8'
+    - '16'
+    - u1
+    - UE-specific subtype = 1 (Link Negotiation Options).
+  - - llr_enabled
+    - '1'
+    - '24'
+    - b1
+    - Link Layer Retry (LLR) enabled flag.
+  - - cbfc_enabled
+    - '1'
+    - '25'
+    - b1
+    - Credit-Based Flow Control (CBFC) enabled flag.
+  - - reserved
+    - '6'
+    - '26'
+    - b6
+    - Reserved bits, must be 0.
+  - - ue_version
+    - '8'
+    - '32'
+    - u1
+    - UE Specification version supported.
+- type: section_header
+  title: UE CBFC TLV
+  subtitle: 12 bytes (96 bits)
+- type: code_block
+  title: ue_cbfc_tlv Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  tlv_type   |   tlv_length    |    subtype    |    num_vcs   |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |       credit_pool_size        |         lossless_vcs         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |         lossless_vcs          |           reserved           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ue_cbfc_tlv Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - tlv_type
+    - '7'
+    - '0'
+    - b7
+    - TLV Type = 127 (Organizationally Specific TLV).
+  - - tlv_length
+    - '9'
+    - '7'
+    - b9
+    - TLV Length in octets (variable, includes OUI + Subtype + Val
+  - - oui
+    - '0'
+    - '16'
+    - u3
+    - 'Organizationally Unique Identifier (OUI) for Ultra Ethernet '
+  - - subtype
+    - '8'
+    - '16'
+    - u1
+    - UE-specific subtype = 2 (CBFC Configuration).
+  - - num_vcs
+    - '8'
+    - '24'
+    - u1
+    - Number of virtual channels (VCs) supported.
+  - - credit_pool_size
+    - '16'
+    - '32'
+    - u2
+    - Total credit pool size (in credits).
+  - - lossless_vcs
+    - '32'
+    - '48'
+    - u4
+    - Bitmap of lossless VCs (bit N = 1 if VC N is lossless).
+  - - reserved
+    - '16'
+    - '80'
+    - u2
+    - Reserved bytes, must be 0.
+- type: section_header
+  title: References
+  subtitle: Specification and Documentation Sources
+- type: item_list
+  title: Primary References
+  items:
+  - UE Specification v1.0.1, Chapter 3 (Transport Layer)
+  - UE Specification v1.0.1, Chapter 4 (Network Layer)
+  - UE Specification v1.0.1, Chapter 5 (Link Layer)
+  - UE Specification v1.0.1, Section 3.4 (SES)
+  - UE Specification v1.0.1, Section 3.5 (PDS)
+  - UE Specification v1.0.1, Section 3.6 (CMS)
+  - UE Specification v1.0.1, Section 3.7 (TSS)
+  - UE Specification v1.0.1, Section 5.1 (LLR)
+  - UE Specification v1.0.1, Section 5.2 (CBFC)
+  - IEEE 802.3-2022, Clause 82.2.3 (64B/66B Block Format)
+  item_type: closed
+- type: item_list
+  title: Analysis Documents
+  items:
+  - analysis/packet_taxonomy/packet_taxonomy_ue_pds.md - PDS format details
+  - analysis/packet_taxonomy/packet_taxonomy_ue_ses.md - SES format details
+  - analysis/packet_taxonomy/packet_taxonomy_ue_cms_tss.md - CMS/TSS format details
+  - analysis/packet_taxonomy/packet_taxonomy_ue_link.md - Link layer format details
+  item_type: closed
+- type: item_list
+  title: Datamodel Location
+  items:
+  - earlysim/datamodel/protocols/ue/transport/pds/ - 30 PDS files
+  - earlysim/datamodel/protocols/ue/transport/ses/ - 27 SES files
+  - earlysim/datamodel/protocols/ue/transport/cms/ - 15 CMS files
+  - earlysim/datamodel/protocols/ue/transport/tss/ - 9 TSS files
+  - earlysim/datamodel/protocols/ue/link/llr/ - 9 LLR files
+  - earlysim/datamodel/protocols/ue/link/cbfc/ - 5 CBFC files
+  - earlysim/datamodel/protocols/ue/link/lldp/ - 3 LLDP files
+  - earlysim/datamodel/protocols/ue/network/ - 4 network files
+  - earlysim/datamodel/protocols/ue/physical/ - 1 physical file
+  item_type: closed

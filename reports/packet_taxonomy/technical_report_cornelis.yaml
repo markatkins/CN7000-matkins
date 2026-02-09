@@ -1,0 +1,1078 @@
+title: 'PMR Packet Taxonomy: Cornelis Proprietary Technical Report'
+subtitle: Cornelis Networks UE+ Extensions and HMAC Addressing
+presenter:
+  name: Packet Taxonomy Team
+  info: Cornelis Networks Engineering
+sections:
+- type: section_header
+  title: Overview
+  subtitle: Cornelis UE+ Extensions for High-Performance Fabric
+- type: bullets
+  title: Cornelis Proprietary Formats
+  items:
+  - UE+ extends standard UltraEthernet with optimized L2 header
+  - 24-bit Hierarchical MAC (HMAC) addressing derived from OPA HLID
+  - 12-byte UE+ header vs 14-byte Ethernet II (2-byte savings)
+  - CSIG+ in-band telemetry for network monitoring
+  - Simultaneous UE+, UE, and RoCEv2 protocol support (HFI_ARCH_003)
+- type: table
+  title: Cornelis Format Summary
+  headers:
+  - Layer
+  - Format
+  - Size
+  - Status
+  - KSY File
+  rows:
+  - - Link
+    - UE+ Header
+    - 12 bytes
+    - Complete
+    - ue_plus.ksy
+  - - Link
+    - Cornelis L2 Prefix
+    - 1 byte
+    - Complete
+    - cornelis_l2_prefix.ksy
+  - - Network
+    - UFH-16+
+    - 12 bytes
+    - Complete
+    - ufh_16_plus.ksy
+  - - Network
+    - UFH-32+
+    - 12 bytes
+    - Complete
+    - ufh_32_plus.ksy
+  - - Network
+    - Collective L2
+    - 4 bytes
+    - WIP
+    - collective_l2.ksy
+  - - Network
+    - Scale-Up L2
+    - 4 bytes
+    - WIP
+    - scaleup_l2.ksy
+  - - Transport
+    - CSIG+
+    - 4 bytes
+    - Complete
+    - csig_plus.ksy
+  - - Transport
+    - PKEY
+    - 2 bytes
+    - Complete
+    - pkey.ksy
+  - - Config
+    - Address Vector
+    - 32 bytes
+    - Complete
+    - address_vector.ksy
+  - - Config
+    - Peer Capability
+    - 32 bytes
+    - Complete
+    - peer_capability.ksy
+  - - Protocol
+    - L2 Header Selection SM
+    - N/A
+    - Complete
+    - l2_header_selection_sm.ksy
+  - - Encapsulation
+    - VxLAN+
+    - 4 bytes
+    - Complete
+    - vxlan_plus.ksy
+- type: section_header
+  title: Protocol Architecture
+  subtitle: UE+ vs Standard UE Comparison
+- type: table
+  title: UE+ vs Standard UE
+  headers:
+  - Aspect
+  - UE+ (Cornelis)
+  - Standard UE
+  rows:
+  - - L2 Header
+    - 12-byte UE+ with HMAC
+    - 14-byte Ethernet II
+  - - Addressing
+    - 24-bit Hierarchical MAC
+    - 48-bit MAC + IPv4/IPv6
+  - - Telemetry
+    - CSIG+ in-band (optional)
+    - None
+  - - Transport
+    - Standard UE PDS/SES/CMS/TSS
+    - Standard UE PDS/SES/CMS/TSS
+  - - Security
+    - TSS encryption (UE standard)
+    - TSS encryption (UE standard)
+  - - FEP Mode
+    - IPv4/UDP encapsulation
+    - IPv4/UDP encapsulation
+- type: bullets
+  title: Key Architecture Principle (HFI_ARCH_003)
+  items:
+  - HFI supports simultaneous use of UE+ and standard Ethernet packets
+  - PMR does NOT operate in a single protocol mode
+  - Application can use RoCE, UE, and UE+ simultaneously
+  - Selection is per-destination based on Address Vector (AV) configuration
+  - Software (libfabric) hides L2 header distinction from applications
+  - Neither HFI nor switch performs UE+ to UE gateway conversion
+- type: section_header
+  title: Header Building Blocks
+  subtitle: All 12 Cornelis KSY Files with Sizes
+- type: table
+  title: Link Layer Headers
+  headers:
+  - Header
+  - Size
+  - KSY File
+  - Description
+  rows:
+  - - UE+ L2
+    - 12 bytes
+    - cornelis/link/ue_plus.ksy
+    - Optimized L2 header with 24-bit HMAC
+  - - Cornelis L2 Prefix
+    - 1 byte
+    - cornelis/link/cornelis_l2_prefix.ksy
+    - Prefix for encapsulated Ethernet frames
+- type: table
+  title: Network Layer Headers
+  headers:
+  - Header
+  - Size
+  - KSY File
+  - Description
+  rows:
+  - - UFH-16+
+    - 12 bytes
+    - cornelis/network/ufh_16_plus.ksy
+    - 16-bit forwarding (65K endpoints)
+  - - UFH-32+
+    - 12 bytes
+    - cornelis/network/ufh_32_plus.ksy
+    - 32-bit forwarding (4B+ endpoints)
+  - - Collective L2
+    - 4 bytes
+    - cornelis/network/collective_l2.ksy
+    - HW-accelerated collectives (WIP)
+  - - Scale-Up L2
+    - 4 bytes
+    - cornelis/network/scaleup_l2.ksy
+    - GPU cluster interconnect (WIP)
+- type: table
+  title: Transport and Config Headers
+  headers:
+  - Header
+  - Size
+  - KSY File
+  - Description
+  rows:
+  - - CSIG+
+    - 4 bytes
+    - cornelis/transport/csig_plus.ksy
+    - In-band telemetry header
+  - - PKEY
+    - 2 bytes
+    - cornelis/transport/pkey.ksy
+    - Partition key isolation
+  - - Address Vector
+    - 32 bytes
+    - cornelis/config/address_vector.ksy
+    - Per-destination protocol config
+  - - Peer Capability
+    - 32 bytes
+    - cornelis/config/peer_capability.ksy
+    - Per-peer capability state
+- type: table
+  title: Protocol and Encapsulation
+  headers:
+  - Header
+  - Size
+  - KSY File
+  - Description
+  rows:
+  - - L2 Header Selection SM
+    - N/A
+    - cornelis/protocols/l2_header_selection_sm.ksy
+    - L2 header selection decision logic
+  - - VxLAN+
+    - 4 bytes
+    - cornelis/encapsulation/vxlan_plus.ksy
+    - Fabric-aware overlay networking
+- type: section_header
+  title: UE+ Header Structure
+  subtitle: 12-Byte Optimized L2 Header (ue_plus.ksy)
+- type: table
+  title: UE+ Header Field Layout
+  headers:
+  - Field
+  - Bits
+  - Byte.Bit
+  - Description
+  rows:
+  - - L2
+    - '2'
+    - 0[7:6]
+    - L2 type identifier (CSR-configurable)
+  - - V
+    - '2'
+    - 0[5:4]
+    - Version field
+  - - zyxm
+    - '4'
+    - 0[3:0]
+    - Local MAC indicator (0b0010 for UE+)
+  - - Length
+    - '6'
+    - 1[7:2]
+    - Packet length (units TBD)
+  - - RC
+    - '3'
+    - 1[1:0], 2[7]
+    - Routing Class (split across bytes)
+  - - SC
+    - '4'
+    - 2[6:3]
+    - Service Class
+  - - Hop
+    - '3'
+    - 2[2:0]
+    - Hop count (0-7)
+  - - DLID/DMAC
+    - '24'
+    - 3-5
+    - Destination Hierarchical MAC
+  - - Entropy
+    - '16'
+    - 6-7
+    - ECMP load balancing hash
+  - - Reserved
+    - '8'
+    - '8'
+    - Reserved for future use
+  - - SLID/SMAC
+    - '24'
+    - 9-11
+    - Source Hierarchical MAC
+- type: bullets
+  title: UE+ Terminology Mapping
+  items:
+  - 'DLID (OPA) -> DMAC (Cornelis): Destination Hierarchical MAC'
+  - 'SLID (OPA) -> SMAC (Cornelis): Source Hierarchical MAC'
+  - 'HLID (OPA) -> HMAC (Cornelis): Hierarchical MAC Address'
+  - 'LID (OPA) -> HMAC (Cornelis): Local Identifier'
+- type: section_header
+  title: UFH-16+ and UFH-32+ Headers
+  subtitle: Unified Forwarding Headers (ufh_16_plus.ksy, ufh_32_plus.ksy)
+- type: table
+  title: UFH-16+ Field Layout (12 bytes)
+  headers:
+  - Field
+  - Byte(s)
+  - Bits
+  - Description
+  rows:
+  - - Type
+    - '0'
+    - '[7:4]'
+    - Packet type for forwarding
+  - - SLAP (dest)
+    - '0'
+    - '[3:0]'
+    - Z,Y,X,M bits (Z,Y,X=001)
+  - - Opaque
+    - 1-3
+    - '24'
+    - Opaque to hardware
+  - - Destination
+    - 4-5
+    - '16'
+    - Destination address (big-endian)
+  - - Opaque
+    - '6'
+    - '[7:4]'
+    - Opaque to hardware
+  - - SLAP (src)
+    - '6'
+    - '[3:0]'
+    - Z,Y,X,M bits (Z,Y,X=001)
+  - - Traffic Class
+    - '7'
+    - '[7:0]'
+    - QoS/priority classification
+  - - Opaque
+    - 8-9
+    - '16'
+    - Opaque to hardware
+  - - Source
+    - 10-11
+    - '16'
+    - Source address (big-endian)
+- type: table
+  title: UFH-32+ Field Layout (12 bytes)
+  headers:
+  - Field
+  - Byte(s)
+  - Bits
+  - Description
+  rows:
+  - - Type
+    - '0'
+    - '[7:4]'
+    - Packet type for forwarding
+  - - SLAP (dest)
+    - '0'
+    - '[3:0]'
+    - Z,Y,X,M bits (Z,Y,X=001)
+  - - Opaque
+    - '1'
+    - '[7:0]'
+    - Opaque to hardware
+  - - Destination
+    - 2-5
+    - '32'
+    - Destination address (big-endian)
+  - - Hop Limit
+    - '6'
+    - '[7:4]'
+    - TTL/hop count
+  - - SLAP (src)
+    - '6'
+    - '[3:0]'
+    - Z,Y,X,M bits (Z,Y,X=001)
+  - - Traffic Class
+    - '7'
+    - '[7:0]'
+    - QoS/priority classification
+  - - Source
+    - 8-11
+    - '32'
+    - Source address (big-endian)
+- type: table
+  title: UFH Type Values
+  headers:
+  - Value
+  - Type
+  - Description
+  rows:
+  - - '0'
+    - Data
+    - Data packet
+  - - '1'
+    - Control
+    - Control packet
+  - - '2'
+    - Collective
+    - Collective operation packet
+  - - '3'
+    - Credit
+    - Credit/flow control
+  - - '4'
+    - Management
+    - Management packet
+  - - '5'
+    - Multicast
+    - Multicast packet (UFH-32 only)
+  - - '6'
+    - Barrier
+    - Barrier synchronization (UFH-32 only)
+  - - '7'
+    - Reduction
+    - Reduction operation (UFH-32 only)
+  - - '15'
+    - Extended/Vendor
+    - UFH-32 extension (UFH-16) or Vendor (UFH-32)
+- type: section_header
+  title: CSIG+ Telemetry
+  subtitle: In-Band Network Monitoring (csig_plus.ksy)
+- type: table
+  title: CSIG+ Header Layout (4 bytes)
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - Version
+    - '4'
+    - 0[7:4]
+    - CSIG+ version (must be 0)
+  - - Telemetry Type
+    - '4'
+    - 0[3:0]
+    - Type of telemetry data
+  - - Flags
+    - '8'
+    - 1[7:0]
+    - Control flags
+  - - Telemetry Data
+    - '16'
+    - 2-3
+    - Type-specific data
+- type: table
+  title: CSIG+ Telemetry Types
+  headers:
+  - Value
+  - Type
+  - Data Format
+  - Use Case
+  rows:
+  - - '0'
+    - Latency
+    - Accumulated ns (16-bit)
+    - Per-hop latency measurement
+  - - '1'
+    - Queue Depth
+    - Occupancy % + QID
+    - Queue monitoring
+  - - '2'
+    - Congestion
+    - ECN + Level
+    - Congestion notification
+  - - '3'
+    - Path Trace
+    - Switch ID (16-bit)
+    - Path verification
+  - - '4'
+    - Timestamp
+    - Truncated time (16-bit)
+    - Timing correlation
+  - - '15'
+    - Custom
+    - Vendor-defined
+    - Vendor extensions
+- type: table
+  title: CSIG+ Flags
+  headers:
+  - Bit
+  - Name
+  - Description
+  rows:
+  - - '7'
+    - Accumulate
+    - Add hop data (vs replace)
+  - - '6'
+    - Report
+    - Generate telemetry report
+  - - '5'
+    - Sink
+    - Final hop for telemetry
+  - - '4'
+    - Source
+    - Originating hop
+  - - '3:0'
+    - Type-specific
+    - Varies by telemetry type
+- type: section_header
+  title: L2 Header Selection State Machine
+  subtitle: Decision Logic (l2_header_selection_sm.ksy)
+- type: table
+  title: L2 Header Selection Decision Tree
+  headers:
+  - Order
+  - Condition
+  - Result
+  - Reason
+  rows:
+  - - '1'
+    - packet_type == ROCEV2
+    - ETHERNET_II
+    - RoCEv2 always uses Ethernet + IP + UDP
+  - - '2'
+    - packet_type == ETHERNET_SERVICE
+    - ETHERNET_II
+    - PTP, management, netdev use standard Ethernet
+  - - '3'
+    - link_state != UE_PLUS_ENABLED
+    - ETHERNET_II
+    - Link did not negotiate UE+ capability
+  - - '4'
+    - '!av_entry.ue_plus_capable'
+    - ETHERNET_II
+    - Destination does not support UE+
+  - - '5'
+    - '!av_entry.hmac_valid'
+    - ETHERNET_II
+    - No fabric-managed HMAC for destination
+  - - '6'
+    - av_entry.protocol_type == UE_STANDARD
+    - ETHERNET_II
+    - AV configured for standard UE over UDP
+  - - '7'
+    - default
+    - UE_PLUS
+    - All conditions met for UE+ header
+- type: table
+  title: L2 Header Selection Inputs
+  headers:
+  - Input
+  - Type
+  - Source
+  rows:
+  - - link_state
+    - link_negotiation_state_enum
+    - link_negotiation_sm.ksy
+  - - av_entry
+    - address_vector_entry
+    - address_vector.ksy
+  - - packet_type
+    - packet_type_enum
+    - Application request
+- type: section_header
+  title: HMAC Addressing Formats
+  subtitle: 3 Topology Configurations
+- type: table
+  title: HMAC Address Topologies
+  headers:
+  - Topology
+  - Group Bits
+  - Switch Bits
+  - Terminal Bits
+  - Total
+  rows:
+  - - No subdivision
+    - 12 (0-4095)
+    - 6 (0-63)
+    - 6 (0-63)
+    - 24 bits
+  - - x2 NIC subdivision
+    - 11 (0-2047)
+    - 6 (0-63)
+    - 7 (0-127)
+    - 24 bits
+  - - x8 NIC subdivision
+    - 9 (0-511)
+    - 6 (0-63)
+    - 9 (0-511)
+    - 24 bits
+- type: bullets
+  title: HMAC Address Structure
+  items:
+  - 'No subdivision (12/6/6): Bits 23:12=Group, 11:6=Switch, 5:0=Terminal'
+  - 'x2 NIC subdivision (11/6/7): Bits 23:13=Group, 12:7=Switch, 6:0=Terminal'
+  - 'x8 NIC subdivision (9/6/9): Bits 23:15=Group, 14:9=Switch, 8:0=Terminal'
+  - HMAC derived from OPA Hierarchical LID (HLID) format
+  - Locally-assigned MAC addresses per IEEE SLAP
+- type: section_header
+  title: Header Overhead Summary
+  subtitle: Packet Variant Efficiency Analysis
+- type: table
+  title: UE+ Packet Variant Overhead
+  headers:
+  - Variant
+  - L2
+  - Telemetry
+  - Security
+  - Transport
+  - Total
+  - 4KB Efficiency
+  rows:
+  - - UE+ Standard
+    - '12'
+    - '0'
+    - '0'
+    - '88'
+    - '100'
+    - 97.6%
+  - - UE+ Small
+    - '12'
+    - '0'
+    - '0'
+    - '56'
+    - '68'
+    - 98.4%
+  - - UE+ + CSIG+
+    - '12'
+    - '4'
+    - '0'
+    - '88'
+    - '104'
+    - 97.5%
+  - - UE+ Encrypted
+    - '12'
+    - '0'
+    - 16+16
+    - '88'
+    - '132'
+    - 96.9%
+  - - UE+ IPv4
+    - '42'
+    - '0'
+    - '0'
+    - '88'
+    - '130'
+    - 96.9%
+  - - UE+ IPv4 Encrypted
+    - '42'
+    - '0'
+    - 16+16
+    - '88'
+    - '162'
+    - 96.2%
+  - - UE+ Full Stack
+    - '12'
+    - '4'
+    - 16+16
+    - '88'
+    - '136'
+    - 96.8%
+- type: table
+  title: Protocol Comparison
+  headers:
+  - Protocol
+  - Min Overhead
+  - Max Overhead
+  - 4KB Efficiency
+  rows:
+  - - UE+ Standard
+    - 100 bytes
+    - 100 bytes
+    - 97.6%
+  - - UE+ Small
+    - 68 bytes
+    - 68 bytes
+    - 98.4%
+  - - RoCEv2 (IPv4)
+    - 58 bytes
+    - 78 bytes
+    - 98.6%
+  - - RoCEv2 (IPv6)
+    - 78 bytes
+    - 98 bytes
+    - 98.1%
+- type: section_header
+  title: Datamodel Coverage
+  subtitle: All 12 Cornelis KSY Files
+- type: table
+  title: Cornelis KSY File Summary
+  headers:
+  - Category
+  - File
+  - Lines
+  - Status
+  rows:
+  - - Link
+    - ue_plus.ksy
+    - '394'
+    - Complete
+  - - Link
+    - cornelis_l2_prefix.ksy
+    - '131'
+    - Complete
+  - - Network
+    - ufh_16_plus.ksy
+    - '244'
+    - Complete
+  - - Network
+    - ufh_32_plus.ksy
+    - '240'
+    - Complete
+  - - Network
+    - collective_l2.ksy
+    - '277'
+    - WIP
+  - - Network
+    - scaleup_l2.ksy
+    - '221'
+    - WIP
+  - - Transport
+    - csig_plus.ksy
+    - '202'
+    - Complete
+  - - Transport
+    - pkey.ksy
+    - '120'
+    - Complete
+  - - Config
+    - address_vector.ksy
+    - '199'
+    - Complete
+  - - Config
+    - peer_capability.ksy
+    - '194'
+    - Complete
+  - - Protocol
+    - l2_header_selection_sm.ksy
+    - '222'
+    - Complete
+  - - Encapsulation
+    - vxlan_plus.ksy
+    - '137'
+    - Complete
+- type: bullets
+  title: Datamodel Directory Structure
+  items:
+  - earlysim/datamodel/protocols/cornelis/link/ - UE+ L2, L2 Prefix
+  - earlysim/datamodel/protocols/cornelis/network/ - UFH-16+, UFH-32+, Collective, Scale-Up
+  - earlysim/datamodel/protocols/cornelis/transport/ - CSIG+, PKEY
+  - earlysim/datamodel/protocols/cornelis/config/ - Address Vector, Peer Capability
+  - earlysim/datamodel/protocols/cornelis/protocols/ - L2 Header Selection SM
+  - earlysim/datamodel/protocols/cornelis/encapsulation/ - VxLAN+
+- type: section_header
+  title: Detailed Header Formats
+  subtitle: Field-level documentation with packet diagrams
+- type: section_header
+  title: UFH-16+ Unified Forwarding Header (16-bit Addressing) - Cornelis Extension
+  subtitle: 12 bytes (96 bits)
+- type: code_block
+  title: ufh_16_plus Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |ufh_typ|slap_de|                  opaque_dest                 |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |          destination          |opaque_|slap_sr| traffic_class|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |          opaque_src           |            source            |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ufh_16_plus Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - ufh_type
+    - '4'
+    - '0'
+    - b4
+    - UFH Type (4 bits).
+  - - slap_dest
+    - '4'
+    - '4'
+    - b4
+    - SLAP field for MAC Destination (4 bits).
+  - - opaque_dest
+    - '24'
+    - '8'
+    - ''
+    - Opaque field (24 bits / 3 bytes).
+  - - destination
+    - '16'
+    - '32'
+    - u2
+    - Destination Address (16 bits, big-endian).
+  - - opaque_6_high
+    - '4'
+    - '48'
+    - b4
+    - Opaque field (4 bits).
+  - - slap_src
+    - '4'
+    - '52'
+    - b4
+    - SLAP field for MAC Source (4 bits).
+  - - traffic_class
+    - '8'
+    - '56'
+    - u1
+    - Traffic Class (8 bits).
+  - - opaque_src
+    - '16'
+    - '64'
+    - u2
+    - Opaque field (16 bits).
+  - - source
+    - '16'
+    - '80'
+    - u2
+    - Source Address (16 bits, big-endian).
+- type: section_header
+  title: UFH-32+ Unified Forwarding Header (32-bit Addressing) - Cornelis Extension
+  subtitle: 12 bytes (96 bits)
+- type: code_block
+  title: ufh_32_plus Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |ufh_typ|slap_de|    opaque     |          destination         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |          destination          |hop_lim|slap_sr| traffic_class|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            source                            |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ufh_32_plus Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - ufh_type
+    - '4'
+    - '0'
+    - b4
+    - UFH Type (4 bits).
+  - - slap_dest
+    - '4'
+    - '4'
+    - b4
+    - SLAP field for MAC Destination (4 bits).
+  - - opaque
+    - '8'
+    - '8'
+    - u1
+    - Opaque field (8 bits).
+  - - destination
+    - '32'
+    - '16'
+    - u4
+    - Destination Address (32 bits, big-endian).
+  - - hop_limit
+    - '4'
+    - '48'
+    - b4
+    - Hop Limit (4 bits).
+  - - slap_src
+    - '4'
+    - '52'
+    - b4
+    - SLAP field for MAC Source (4 bits).
+  - - traffic_class
+    - '8'
+    - '56'
+    - u1
+    - Traffic Class (8 bits).
+  - - source
+    - '32'
+    - '64'
+    - u4
+    - Source Address (32 bits, big-endian).
+- type: section_header
+  title: Cornelis Ethernet L2 Prefix
+  subtitle: 1 bytes (8 bits)
+- type: code_block
+  title: cornelis_l2_prefix Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |l2_|pri| flags                                                |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: cornelis_l2_prefix Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - l2_type
+    - '2'
+    - '0'
+    - b2
+    - L2 Type (2 bits).
+  - - priority
+    - '2'
+    - '2'
+    - b2
+    - Priority (2 bits).
+  - - flags
+    - '4'
+    - '4'
+    - b4
+    - Flags (4 bits).
+- type: section_header
+  title: UE+ Optimized Ultra Ethernet L2 Header
+  subtitle: 12 bytes (96 bits)
+- type: code_block
+  title: ue_plus_header Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |l2_|ver| zyxm  |  length   |rc_|r|service|hop_c|   dest_hmac  |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |           dest_hmac           |            entropy           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |   reserved    |                  source_hmac                 |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ue_plus_header Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - l2_type
+    - '2'
+    - '0'
+    - b2
+    - L2 Type Identifier (2 bits).
+  - - version
+    - '2'
+    - '2'
+    - b2
+    - Version field (2 bits).
+  - - zyxm
+    - '4'
+    - '4'
+    - b4
+    - Local MAC indicator (4 bits).
+  - - length
+    - '6'
+    - '8'
+    - b6
+    - Packet length (6 bits).
+  - - rc_high
+    - '2'
+    - '14'
+    - b2
+    - Routing Class high bits (2 bits).
+  - - rc_low
+    - '1'
+    - '16'
+    - b1
+    - Routing Class low bit (1 bit).
+  - - service_class
+    - '4'
+    - '17'
+    - b4
+    - Service Class (4 bits).
+  - - hop_count
+    - '3'
+    - '21'
+    - b3
+    - Hop Count (3 bits).
+  - - dest_hmac
+    - '24'
+    - '24'
+    - b24
+    - Destination Hierarchical MAC (24 bits).
+  - - entropy
+    - '16'
+    - '48'
+    - u2
+    - Entropy field (16 bits).
+  - - reserved
+    - '8'
+    - '64'
+    - u1
+    - Reserved field (8 bits).
+  - - source_hmac
+    - '24'
+    - '72'
+    - b24
+    - Source Hierarchical MAC (24 bits).
+- type: section_header
+  title: CSIG+ Telemetry Header
+  subtitle: 4 bytes (32 bits)
+- type: code_block
+  title: csig_plus Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |version|telemet|     flags     |        telemetry_data        |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: csig_plus Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - version
+    - '4'
+    - '0'
+    - b4
+    - Version (4 bits).
+  - - telemetry_type
+    - '4'
+    - '4'
+    - b4
+    - Telemetry Type (4 bits).
+  - - flags
+    - '8'
+    - '8'
+    - u1
+    - Flags (8 bits).
+  - - telemetry_data
+    - '16'
+    - '16'
+    - u2
+    - Telemetry Data (16 bits).
+- type: section_header
+  title: PKEY Partition Key Stacked Header
+  subtitle: 2 bytes (16 bits)
+- type: code_block
+  title: pkey Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |m|  pkey_high  |   pkey_low                                   |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: pkey Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - membership
+    - '1'
+    - '0'
+    - b1
+    - Membership Type (1 bit).
+  - - pkey_high
+    - '7'
+    - '1'
+    - b7
+    - P_Key High Bits (7 bits).
+  - - pkey_low
+    - '8'
+    - '8'
+    - u1
+    - P_Key Low Byte (8 bits).
+- type: section_header
+  title: References
+  subtitle: Documentation and Specifications
+- type: table
+  title: Internal Documents
+  headers:
+  - Document
+  - Description
+  rows:
+  - - packet_taxonomy_cornelis.md
+    - Cornelis proprietary formats detail
+  - - packet_taxonomy_ue_plus_variants.md
+    - UE+ packet variants analysis
+  - - CN7000 Packet Taxonomy.ppt
+    - Original PowerPoint reference
+  - - CN7000 HFI Requirements
+    - HFI_ARCH_003 simultaneous protocol support
+- type: table
+  title: External Specifications
+  headers:
+  - Specification
+  - Version
+  - Sections
+  rows:
+  - - UE Specification
+    - v1.0.1
+    - Table 3-16 (next_hdr), Table 3-90 (TSS)
+  - - Cornelis UE+ Specification
+    - '1.1'
+    - UE+ L2 Header, CSIG+ Telemetry
+  - - RFC 7348
+    - N/A
+    - VxLAN standard
+  - - IEEE 802.1Q
+    - N/A
+    - VLAN tagging
+- type: bullets
+  title: KSY File References (All 12)
+  items:
+  - ue_plus.ksy - UE+ L2 header (12 bytes)
+  - cornelis_l2_prefix.ksy - L2 prefix (1 byte)
+  - ufh_16_plus.ksy - UFH-16+ forwarding (12 bytes)
+  - ufh_32_plus.ksy - UFH-32+ forwarding (12 bytes)
+  - collective_l2.ksy - Collective operations (4 bytes)
+  - scaleup_l2.ksy - Scale-up networking (4 bytes)
+  - csig_plus.ksy - CSIG+ telemetry (4 bytes)
+  - pkey.ksy - Partition key (2 bytes)
+  - address_vector.ksy - Address vector config (32 bytes)
+  - peer_capability.ksy - Peer capability state (32 bytes)
+  - l2_header_selection_sm.ksy - L2 header selection state machine
+  - vxlan_plus.ksy - VxLAN+ encapsulation (4 bytes)

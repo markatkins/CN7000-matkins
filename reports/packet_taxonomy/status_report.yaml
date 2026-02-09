@@ -1,0 +1,340 @@
+title: "CN7000 Packet Taxonomy Review Status"
+subtitle: "Engineering Status Report - Full History (2026-01-08 to 2026-02-03)"
+
+presenter:
+  name: "Packet Taxonomy Team"
+  info: "Cornelis Networks Engineering"
+
+sections:
+  - type: section_header
+    title: "Executive Summary"
+    subtitle: "Review Progress and Key Metrics"
+
+  - type: status_summary
+    title: "Overall Work Item Status"
+    subtitle: "All series W-02 through W-20"
+    open_count: 5
+    closed_count: 96
+    notes: "95% completion. 13 deferred, 3 spec updates pending. Datamodel gaps (D-001 to D-003) tracked separately."
+
+  - type: item_list
+    title: "Review Types Covered"
+    items:
+      - "Datamodel Fixes: Field sizes, layouts, restructuring (W-04, W-07, W-10-014, W-11-006, W-12-011)"
+      - "Datamodel Enhancements: Cross-references, metadata, enumerations (W-09 to W-14)"
+      - "Documentation: Protocol coverage, MTU values, CMS formats (W-02, W-05, W-17)"
+      - "Architecture: L2 header selection, link negotiation (W-09-009, W-16, W-19, W-20)"
+      - "Terminology: PDP vs PDS, SES vs SE naming (W-03)"
+      - "Investigation: IB Spec 2.0, CC_TYPE extensions (W-10-013, W-11-009)"
+    item_type: "closed"
+
+  - type: section_header
+    title: "Protocol Coverage"
+    subtitle: "174 KSY Files in datamodel/protocols/"
+
+  - type: item_list
+    title: "Ultra Ethernet (ue/) - 103 Files"
+    items:
+      - "transport/pds/: 14 files - Packet Delivery Sublayer (RUD, ROD, ACK, NACK, CP)"
+      - "transport/ses/: 15 files - Semantic Sublayer (requests, responses, small msg)"
+      - "transport/cms/: 15 files (7 formats + 8 protocols) - Congestion Management"
+      - "transport/tss/: 9 files (2 formats + 7 protocols) - Transport Security"
+      - "transport/sequences/: 12 files - Packet sequences"
+      - "link/llr/: 9 files (6 formats + 3 protocols) - Link Level Reliability"
+      - "link/lldp/: 3 files (2 TLVs + 1 protocol) - Link Layer Discovery"
+      - "link/cbfc/: 5 files (2 formats + 3 protocols) - Credit-Based Flow Control"
+      - "network/: 4 files - UFH-16, UFH-32, DSCP, packet trimming"
+      - "physical/: 1 file - Control ordered sets"
+    item_type: "closed"
+
+  - type: item_list
+    title: "UALink (ualink/) - 38 Files (Reference Only)"
+    items:
+      - "upli/: 8 files (6 channels + 2 protocols) - Upper Protocol Layer Interface"
+      - "transaction/: 9 files (7 formats + 2 protocols) - Transaction Layer flits"
+      - "datalink/: 12 files (4 headers + 4 messages + 4 protocols) - Data Link Layer"
+      - "physical/: 4 files (3 formats + 1 protocol) - Physical Layer"
+      - "security/: 5 files (3 formats + 2 protocols) - Encryption/Authentication"
+    item_type: "closed"
+
+  - type: item_list
+    title: "Ethernet, RoCE, Cornelis"
+    items:
+      - "ethernet/link/: 5 files - Ethernet II, 802.3, VLAN, LLC, SNAP"
+      - "ethernet/network/: 2 files - IPv4, IPv6"
+      - "ethernet/transport/: 2 files - TCP, UDP"
+      - "ethernet/rss/: 3 files - Hash algorithm, Toeplitz key, hash input"
+      - "roce/transport/: 8 files - BTH, RETH, AETH, DETH, IMMDT, AtomicETH, AtomicAckETH, ICRC"
+      - "roce/protocols/: 1 file - QP state machine"
+      - "cornelis/link/: 2 files - UE+, L2 prefix"
+      - "cornelis/network/: 4 files - UFH-16+, UFH-32+, collective_l2, scaleup_l2"
+      - "cornelis/transport/: 2 files - CSIG+, pkey"
+      - "cornelis/config/: 2 files - address_vector, peer_capability"
+      - "cornelis/protocols/: 1 file - L2 header selection SM"
+      - "cornelis/encapsulation/: 1 file - VxLAN+"
+    item_type: "closed"
+
+  - type: section_header
+    title: "Work Item Series"
+    subtitle: "Organized by Series and Modification Type"
+
+  - type: item_list
+    title: "W-02: Protocol Support Documentation"
+    items:
+      - "W-02-005: Protocol support documentation - Documented UE+, RoCEv2, Ethernet [CLOSED]"
+      - "W-02-006: Cornelis Collective Reduction Protocol - Documented in HAS 2.5.4 [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-03: Terminology Clarifications"
+    items:
+      - "W-03-001: Semantic Engine count - Confirmed 64 (8x8) in UML and HAS [CLOSED]"
+      - "W-03-002: PDP vs PDS naming inconsistency - Tracked in HAS/PMR/WORK.md [SPEC UPDATE]"
+      - "W-03-006: SES vs SE naming - Tracked in HAS/PMR/WORK.md [SPEC UPDATE]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-04: Datamodel Restructuring"
+    items:
+      - "W-04-004: UE+ header restructure - 24-bit HMAC, correct field layout [CLOSED]"
+      - "W-04-005: UFH-16 address size - Restructured to 16-bit addressing [CLOSED]"
+      - "W-04-006: UFH-32 address size - Restructured to 32-bit addressing [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-05: MTU and Documentation"
+    items:
+      - "W-05-001: UE taxonomy reference - Documented in 05-packet-formats.md [CLOSED]"
+      - "W-05-002: MTU values verification - HW max=10240, UE+=8192, RoCE=4096 [CLOSED]"
+      - "W-05-003: CMS detailed formats - Documented 8 CMS protocol files [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-06 to W-08: Deferred/WIP Items"
+    items:
+      - "W-06-001: UFH-32 entropy field - Awaiting UEC standardization [DEFERRED]"
+      - "W-07-001: ack_cc_state size - Fixed to 64-bit per UE Spec Table 3-36 [CLOSED]"
+      - "W-07-002: collective/scaleup specs - Superseded by W-08-001/002 [CLOSED]"
+      - "W-07-003: ue_plus.ksy Length field units - TBD (now 6 bits) [INVESTIGATION]"
+      - "W-08-001: collective_l2.ksy WIP - Spec incomplete [SPEC UPDATE]"
+      - "W-08-002: scaleup_l2.ksy WIP - Spec incomplete [SPEC UPDATE]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-09: UE Spec Clarifications (10 items)"
+    items:
+      - "W-09-001 to W-09-004: UE L2/FEP/Network headers - NOT NEEDED (uses standard) [CLOSED]"
+      - "W-09-003: PDCID format documentation - Added to rud_rod_request.ksy [CLOSED]"
+      - "W-09-005/006: CP payload formats - Updated rud_rod_cp.ksy [CLOSED]"
+      - "W-09-007: nack_codes.ksy - Created per Table 3-59 [CLOSED]"
+      - "W-09-008: next_header_types.ksy - Created per Table 3-16 [CLOSED]"
+      - "W-09-009: L2 header selection rules - Documented UE+ vs Ethernet II [CLOSED]"
+      - "W-09-010: UFH UEC standardization - Future optional [DEFERRED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-10: CMS Enumerations (15 items)"
+    items:
+      - "W-10-001/002: cc_type.ksy, ccx_type.ksy - Created enumerations [CLOSED]"
+      - "W-10-003/004: Preprocessing refs, Credit CP constraints [CLOSED]"
+      - "W-10-005: ccc_state_machine.ksy API refs - Added Section 3.6.8.1 [CLOSED]"
+      - "W-10-006: nscc_source.ksy expansion - 53 to 580 lines [CLOSED]"
+      - "W-10-007 to W-10-012: Algorithm stub expansions [DEFERRED - 6 items]"
+      - "W-10-013: CC_TYPE proprietary extensions [INVESTIGATION]"
+      - "W-10-014: ack_cc_state_rccc_tfc.ksy size fix - 5 to 8 bytes [CLOSED]"
+      - "W-10-015: nscc_source.ksy review - PASS, all params verified [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-11: RoCE BTH/AETH Updates (9 items)"
+    items:
+      - "W-11-001/002: is_atomic docs, is_ack/is_atomic_ack instances [CLOSED]"
+      - "W-11-003/004: CNP/XRC transport types, FECN/BECN documentation [CLOSED]"
+      - "W-11-005: Operation validity matrix per IB Spec Table 38 [CLOSED]"
+      - "W-11-006: aeth.ksy syndrome fix - Mask 0x1f, shift >>5 [CLOSED]"
+      - "W-11-007/008: x-related-headers, x-spec metadata to all RoCE files [CLOSED]"
+      - "W-11-009: IB Spec 2.0 review - Blocked on IBTA access [PENDING]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-12: RoCE Cross-References (18 items)"
+    items:
+      - "W-12-001 to W-12-005: Opcode format standardization, README updates [CLOSED]"
+      - "W-12-006: aeth.ksy rnr_timeout enum - CANCELLED (complete range) [CANCELLED]"
+      - "W-12-007 to W-12-011: x-spec fixes, ICRC masking, syndrome fix [CLOSED]"
+      - "W-12-012: PMR transport support - CNP=Yes, XRC=No [CLOSED]"
+      - "W-12-013 to W-12-018: Missing opcodes in x-related-headers [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-13: Ethernet Metadata/RSS (21 items)"
+    items:
+      - "W-13-001 to W-13-003: x-related-headers, x-spec, x-packet to all files [CLOSED]"
+      - "W-13-004/005: Frame size clarification, VLAN header size docs [CLOSED]"
+      - "W-13-006 to W-13-009: README, RoCE cross-ref, RSS hash, TCP reserved [CLOSED]"
+      - "W-13-010: IEEE 802.3 frame support - ethernet_802_3, llc, snap [CLOSED]"
+      - "W-13-011: RSS hash documentation - Created rss/ directory [CLOSED]"
+      - "W-13-012 to W-13-019: VLAN/RSS cross-refs, README fixes [CLOSED]"
+      - "W-13-020/021: Kaitai validation script - validate_ksy.py [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-14: UALink Expansion (11 items)"
+    items:
+      - "W-14-001: dl_flit.yaml segment sizes - Fixed to match ksy [CLOSED]"
+      - "W-14-002: metadata.yaml packet count - 35 to 38 [CLOSED]"
+      - "W-14-003: YAML ksy_file cross-references [CLOSED]"
+      - "W-14-004: Security layer expansion - 270 to 1655 lines [CLOSED]"
+      - "W-14-005: spec_date verification [CLOSED]"
+      - "W-14-006: Security layer review - All verified [CLOSED]"
+      - "W-14-007: x-related-headers to 37 KSY files [CLOSED]"
+      - "W-14-008 to W-14-011: Half-flit, response_field, flit_header, YAML criteria [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-15 to W-16: Recent Work"
+    items:
+      - "W-15: UE+ to CN7000 PPT comparison - Requires SharePoint access [DEFERRED]"
+      - "W-15-001: UFH header reorganization - UE standard vs Cornelis _plus [CLOSED]"
+      - "W-16: L2 Header Selection Datamodel - 4 new KSY files, 924 lines [CLOSED]"
+    item_type: "closed"
+
+  - type: item_list
+    title: "W-17 to W-20: Open Items"
+    items:
+      - "W-17: VLAN Protocol Coverage - Cross-protocol interactions [OPEN - Medium]"
+      - "W-18: VXLAN Protocol Coverage - Standard vs VxLAN+ selection [OPEN - Medium]"
+      - "W-19: UFH Rules for L2 Selection - Scale-out vs scale-up [OPEN - High]"
+      - "W-20: Link Negotiation Review - Multi-protocol support [OPEN - High]"
+    item_type: "open"
+
+  - type: section_header
+    title: "Protocol Modifications Summary"
+    subtitle: "Files Created and Modified by Protocol"
+
+  - type: comparison
+    title: "Ultra Ethernet (ue/)"
+    left_title: "Files Created"
+    left_items:
+      - "network/ufh_16.ksy, ufh_32.ksy (UE standard)"
+      - "transport/pds/nack_codes.ksy"
+      - "transport/ses/next_header_types.ksy"
+      - "transport/cms/cc_type.ksy, ccx_type.ksy"
+      - "link/lldp/protocols/link_negotiation_sm.ksy"
+    right_title: "Files Modified"
+    right_items:
+      - "transport/pds/ack_cc.ksy (64-bit fix)"
+      - "transport/pds/rud_rod_request.ksy (PDCID)"
+      - "transport/pds/rud_rod_cp.ksy (payload)"
+      - "transport/cms/nscc_source.ksy (expansion)"
+      - "transport/cms/ack_cc_state_*.ksy (refs)"
+      - "transport/cms/ccc_state_machine.ksy (API)"
+
+  - type: comparison
+    title: "Ethernet and RoCE"
+    left_title: "Ethernet Created"
+    left_items:
+      - "link/ethernet_802_3.ksy"
+      - "link/llc.ksy"
+      - "link/snap.ksy"
+      - "rss/hash_algorithm.ksy"
+      - "rss/toeplitz_key.ksy"
+      - "rss/hash_input.ksy"
+    right_title: "RoCE/Ethernet Modified"
+    right_items:
+      - "All 12 ethernet files (metadata)"
+      - "roce/transport/bth.ksy (major)"
+      - "roce/transport/aeth.ksy (syndrome fix)"
+      - "All 9 RoCE files (x-related-headers)"
+      - "ipv4.ksy, ipv6.ksy (RSS refs)"
+      - "tcp.ksy, udp.ksy (RSS, reserved)"
+
+  - type: comparison
+    title: "Cornelis and UALink"
+    left_title: "Cornelis Created"
+    left_items:
+      - "config/address_vector.ksy"
+      - "config/peer_capability.ksy"
+      - "protocols/l2_header_selection_sm.ksy"
+    right_title: "Cornelis/UALink Modified"
+    right_items:
+      - "network/ufh_16.ksy renamed to ufh_16_plus.ksy"
+      - "network/ufh_32.ksy renamed to ufh_32_plus.ksy"
+      - "link/ue_plus.ksy (restructure)"
+      - "37 UALink files (x-related-headers)"
+      - "5 UALink security files (expansion)"
+      - "UALink half-flit, response_field"
+
+  - type: section_header
+    title: "Non-Protocol Changes"
+    subtitle: "Files Outside datamodel/protocols/"
+
+  - type: item_list
+    title: "Scripts and Infrastructure"
+    items:
+      - "datamodel/scripts/validate_ksy.py - KSY validation (W-13-020/021)"
+    item_type: "closed"
+
+  - type: item_list
+    title: "Hardware Datamodel (MTU Updates W-05-002)"
+    items:
+      - "hw/asics/pmr/interfaces/ethernet/eth_tx_wqe.ksy - 9216 to 10240"
+      - "hw/ip/cornelis/ec/descriptors.ksy - 9216 to 10240"
+      - "hw/asics/pmr/interfaces/pcie/descriptors.ksy - 9216 to 10240"
+    item_type: "closed"
+
+  - type: item_list
+    title: "HAS Documentation Updates"
+    items:
+      - "docs/HAS/PMR/03-architecture.md - MTU documentation"
+      - "docs/HAS/PMR/04-addressing.md - HMAC addressing (W-04-004)"
+      - "docs/HAS/PMR/05-packet-formats.md - Packet formats, MTU"
+      - "docs/HAS/PMR/WORK.md - W-03-002, W-03-006 tracking"
+    item_type: "closed"
+
+  - type: section_header
+    title: "Datamodel Gaps and Spec Questions"
+    subtitle: "Tracked Separately from Work Items"
+
+  - type: item_list
+    title: "Datamodel Gaps (D-001 to D-003)"
+    items:
+      - "D-001 [High]: PMR CSR definitions missing - Target: datamodel/hw/asics/pmr/csrs/*.rdl"
+      - "D-002 [Medium]: PMR block hierarchy YAML incomplete - Target: blocks.yaml"
+      - "D-003 [Medium]: PMR interface contracts missing - Target: views/contracts/pmr-*.puml"
+    item_type: "open"
+
+  - type: item_list
+    title: "Specification Questions (Q1-Q4)"
+    items:
+      - "Q1 [Medium]: Lightweight Interface Scope - What features reduced?"
+      - "Q2 [Medium]: Tag Table Sizing - Per-endpoint configurable?"
+      - "Q3 [Medium]: Multi-Packet Eager Messages - HW support?"
+      - "Q4 [Low]: RoCE Work Queue Implementation - Confirm SW-implemented"
+    item_type: "open"
+
+  - type: section_header
+    title: "Summary Statistics"
+    subtitle: "Work Item Counts by Status"
+
+  - type: item_list
+    title: "Final Counts"
+    items:
+      - "Total Work Items: 114 (W-02 through W-20, plus D-001 to D-003, Q1-Q4)"
+      - "Closed: 96 items (84%)"
+      - "Open: 5 items (W-17, W-18, W-19, W-20, W-11-009)"
+      - "Deferred: 13 items (W-06-001, W-09-010, W-10-007 to W-10-012, W-10-013, W-15)"
+      - "Spec Update: 5 items (W-03-002, W-03-006, W-08-001, W-08-002, D-001 to D-003)"
+      - "Cancelled: 1 item (W-12-006)"
+      - "Investigation: 2 items (W-07-003, W-10-013)"
+    item_type: "closed"
+
+  - type: item_list
+    title: "Next Steps"
+    items:
+      - "Complete W-19 (UFH Rules) - High priority architecture decision"
+      - "Complete W-20 (Link Negotiation) - Multi-protocol support"
+      - "Request IB Spec 2.0 from IBTA for W-11-009"
+      - "Obtain CN7000 Packet Taxonomy.ppt for W-15"
+      - "Address D-001 to D-003 datamodel gaps"
+    item_type: "open"

@@ -1,0 +1,63 @@
+# Example progress report data for pptx_helper CLI
+# Usage: python -m utilities.pptx_helper --type progress --data examples/progress_report.yaml --output report.pptx
+
+title: "Q4 2025 Progress Report"
+subtitle: "Engineering Status Update"
+presenter:
+  name: "Jane Smith"
+  info: "Senior Engineer"
+
+sections:
+  - type: status_summary
+    title: "Sprint 42 Status"
+    open_count: 5
+    closed_count: 12
+    notes: "On track for release"
+
+  - type: item_list
+    title: "Open Items"
+    item_type: "open"
+    items:
+      - "BUG-123: Login timeout on slow connections"
+      - "FEAT-456: Add export to CSV functionality"
+      - "FEAT-457: Implement dark mode toggle"
+      - "BUG-124: Memory leak in dashboard component"
+      - "TASK-789: Update documentation for v2.0"
+
+  - type: item_list
+    title: "Completed This Sprint"
+    item_type: "closed"
+    items:
+      - "FEAT-450: User authentication flow"
+      - "FEAT-451: Password reset functionality"
+      - "BUG-120: Fix date formatting in reports"
+      - "BUG-121: Resolve caching issues"
+      - "TASK-780: Database migration scripts"
+
+  - type: comparison
+    title: "Sprint Goals vs Delivered"
+    left_title: "Planned"
+    left_items:
+      - "Authentication system"
+      - "Password reset"
+      - "Export functionality"
+      - "Dark mode"
+    right_title: "Delivered"
+    right_items:
+      - "Authentication system ✓"
+      - "Password reset ✓"
+      - "Export functionality (80%)"
+      - "Dark mode (deferred)"
+
+  - type: section_header
+    title: "Next Steps"
+    subtitle: "Sprint 43 Planning"
+
+  - type: item_list
+    title: "Sprint 43 Goals"
+    item_type: "open"
+    items:
+      - "Complete export functionality"
+      - "Begin dark mode implementation"
+      - "Address remaining bugs"
+      - "Performance optimization"

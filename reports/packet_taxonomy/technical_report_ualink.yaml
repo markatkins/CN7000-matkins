@@ -1,0 +1,1320 @@
+title: 'PMR Packet Taxonomy: UALink Technical Report'
+subtitle: Ultra Accelerator Link Protocol Formats (Reference Only)
+presenter:
+  name: Packet Taxonomy Team
+  info: Cornelis Networks Engineering
+sections:
+- type: section_header
+  title: Overview
+  subtitle: UALink 200 Protocol - Reference Only
+- type: bullet_list
+  title: UALink Protocol Summary
+  items:
+  - UALink (Ultra Accelerator Link) - AI/ML accelerator interconnect protocol
+  - NOT currently supported by PMR - included for reference only
+  - 38 packet definitions across 5 protocol layers (6,023 total lines)
+  - Designed for high-bandwidth, low-latency GPU/TPU communication
+  - Based on UALink 200 Specification v1.0 (April 2025)
+  - May be relevant for future AI/ML accelerator interconnect work
+- type: table
+  title: Layer Summary
+  headers:
+  - Layer
+  - Files
+  - Key Formats
+  - Lines
+  rows:
+  - - UPLI (Upper Protocol Layer Interface)
+    - '8'
+    - commands.ksy, request_channel.ksy, status_codes.ksy
+    - ~1,500
+  - - Transaction
+    - '9'
+    - tl_flit.ksy, control_half_flit.ksy, data_half_flit.ksy
+    - ~1,200
+  - - Data Link
+    - '12'
+    - dl_flit.ksy, segment_header.ksy, crc.ksy
+    - ~1,400
+  - - Physical
+    - '4'
+    - alignment_markers.ksy, control_ordered_sets.ksy
+    - ~255
+  - - Security
+    - '5'
+    - authentication.ksy, encryption.ksy, key_derivation.ksy
+    - ~1,700
+- type: bullet_list
+  title: PMR Support Status
+  items:
+  - 'UALink Protocol: NOT SUPPORTED by PMR'
+  - Datamodel included for reference and future planning
+  - May be considered for future AI/ML workloads
+  - All 38 KSY files are production-quality with spec traceability
+- type: section_header
+  title: Protocol Architecture
+  subtitle: 5-Layer UALink Protocol Stack
+- type: bullet_list
+  title: UALink Protocol Stack
+  items:
+  - 'Layer 5: UPLI (Upper Protocol Layer Interface) - Application-facing API'
+  - 'Layer 4: Transaction Layer - TL Flits, Flow Control, Compression'
+  - 'Layer 3: Data Link Layer - DL Flits, Segments, CRC, Replay'
+  - 'Layer 2: Physical Layer - Alignment, Training, Ordered Sets'
+  - 'Cross-cutting: Security Layer - Authentication, Encryption, Key Management'
+- type: table
+  title: Protocol Layer Details
+  headers:
+  - Layer
+  - Primary Function
+  - Key Structures
+  - Spec Reference
+  rows:
+  - - UPLI
+    - Application interface
+    - Commands, Request/Response Channels
+    - UALink200 Section 4
+  - - Transaction
+    - Message framing
+    - TL Flit (64 bytes), Half-Flits (32 bytes)
+    - UALink200 Section 5
+  - - Data Link
+    - Reliable delivery
+    - DL Flit (640 bytes), Segments, CRC-32
+    - UALink200 Section 6
+  - - Physical
+    - Lane alignment
+    - Alignment Markers, Control Ordered Sets
+    - UALink200 Section 7
+  - - Security
+    - Encryption/Auth
+    - AES-GCM, Key Derivation, Key Rotation
+    - UALink200 Section 9
+- type: section_header
+  title: UPLI Layer
+  subtitle: Upper Protocol Layer Interface (8 KSY Files)
+- type: table
+  title: UPLI Packet Formats (6 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - Spec Reference
+  rows:
+  - - commands.ksy
+    - UPLI command definitions
+    - '221'
+    - UALink200 Section 4.1
+  - - request_channel.ksy
+    - Request channel format
+    - '338'
+    - UALink200 Section 4.2
+  - - originator_data_channel.ksy
+    - Originator data channel
+    - '124'
+    - UALink200 Section 4.3
+  - - read_response_channel.ksy
+    - Read response channel
+    - '172'
+    - UALink200 Section 4.4
+  - - write_response_channel.ksy
+    - Write response channel
+    - '134'
+    - UALink200 Section 4.5
+  - - status_codes.ksy
+    - Status code definitions
+    - '139'
+    - UALink200 Section 4.6
+- type: table
+  title: UPLI Protocol State Machines (2 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - States
+  rows:
+  - - protocols/connection_handshake.ksy
+    - Connection setup state machine
+    - '182'
+    - IDLE, CONNECTING, CONNECTED, ERROR
+  - - protocols/flow_control.ksy
+    - Flow control protocol
+    - '178'
+    - Credit-based flow control
+- type: section_header
+  title: Transaction Layer
+  subtitle: TL Flit Formats and Protocols (9 KSY Files)
+- type: table
+  title: Transaction Layer Formats (7 files)
+  headers:
+  - File
+  - Description
+  - Size
+  - Lines
+  rows:
+  - - tl_flit.ksy
+    - Transaction Layer Flit
+    - 64 bytes
+    - '144'
+  - - control_half_flit.ksy
+    - Control half flit
+    - 32 bytes
+    - '111'
+  - - data_half_flit.ksy
+    - Data half flit
+    - 32 bytes
+    - '142'
+  - - message_half_flit.ksy
+    - Message half flit
+    - 32 bytes
+    - '148'
+  - - request_field.ksy
+    - Request field format
+    - Variable
+    - '133'
+  - - response_field.ksy
+    - Response field format
+    - Variable
+    - '317'
+  - - flow_control_field.ksy
+    - Flow control field
+    - Variable
+    - '127'
+- type: table
+  title: Transaction Layer Protocols (2 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - Function
+  rows:
+  - - protocols/compression.ksy
+    - Data compression protocol
+    - '76'
+    - Field compression for requests/responses
+  - - protocols/address_cache.ksy
+    - Address caching protocol
+    - '85'
+    - Address compression via caching
+- type: bullet_list
+  title: TL Flit Structure
+  items:
+  - 'TL Flit: 64 bytes (512 bits) - fundamental unit of data transfer'
+  - Contains two 32-byte Half-Flits (Half-Flit 0 and Half-Flit 1)
+  - 'Half-Flit types: Control, Data, or Message (indicated by DL Segment Header)'
+  - Up to 10 TL Flits pack into one 640-byte DL Flit
+  - Control Half-Flits contain request/response fields
+  - Data Half-Flits contain 32 bytes of payload data
+- type: section_header
+  title: Data Link Layer
+  subtitle: DL Flit Formats, Messages, and Protocols (12 KSY Files)
+- type: table
+  title: Data Link Layer Headers (4 files)
+  headers:
+  - File
+  - Description
+  - Size
+  - Lines
+  rows:
+  - - dl_flit.ksy
+    - Data Link Layer Flit
+    - 640 bytes
+    - '233'
+  - - flit_header.ksy
+    - Flit header format
+    - 3 bytes
+    - '173'
+  - - segment_header.ksy
+    - Segment header
+    - 1 byte
+    - '71'
+  - - crc.ksy
+    - CRC-32 calculation
+    - 4 bytes
+    - '36'
+- type: table
+  title: Data Link Layer Messages (4 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - Spec Reference
+  rows:
+  - - messages/control_messages.ksy
+    - Control messages
+    - '62'
+    - UALink200 Section 6.4
+  - - messages/basic_messages.ksy
+    - Basic messages
+    - '70'
+    - UALink200 Section 6.4
+  - - messages/uart_messages.ksy
+    - UART messages
+    - '63'
+    - UALink200 Section 6.4
+  - - messages/vendor_defined.ksy
+    - Vendor extensions
+    - '49'
+    - UALink200 Section 6.4
+- type: table
+  title: Data Link Layer Protocols (4 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - States
+  rows:
+  - - protocols/link_state.ksy
+    - Link state machine
+    - '209'
+    - DL_FAULT, DL_IDLE, DL_NOP, DL_UP, DL_PWRDN
+  - - protocols/link_resiliency.ksy
+    - Link resiliency protocol
+    - '89'
+    - Error detection and recovery
+  - - protocols/link_level_replay.ksy
+    - Replay protocol
+    - '145'
+    - Flit replay for error recovery
+  - - protocols/link_folding.ksy
+    - Link folding protocol
+    - '98'
+    - Dynamic link width adjustment
+- type: bullet_list
+  title: DL Flit Structure (640 bytes)
+  items:
+  - 'Flit Header: 3 bytes (sequence numbers, operation type)'
+  - 'Segment 0: 129 bytes (1B header + 128B payload, 32 sectors)'
+  - 'Segment 1: 129 bytes (1B header + 128B payload, 32 sectors)'
+  - 'Segment 2: 129 bytes (1B header + 128B payload, 32 sectors)'
+  - 'Segment 3: 125 bytes (1B header + 124B payload, 31 sectors)'
+  - 'Segment 4: 121 bytes (1B header + 120B payload, 30 sectors)'
+  - 'CRC: 4 bytes (CRC-32 per IEEE 802.3)'
+- type: section_header
+  title: Physical Layer
+  subtitle: Lane Alignment and Link Training (4 KSY Files)
+- type: table
+  title: Physical Layer Formats (3 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - Spec Reference
+  rows:
+  - - alignment_markers.ksy
+    - Lane alignment markers
+    - '43'
+    - UALink200 Section 7.2
+  - - control_ordered_sets.ksy
+    - Control sequences
+    - '70'
+    - UALink200 Section 7.3
+  - - reconciliation_sublayer.ksy
+    - RS sublayer
+    - '46'
+    - UALink200 Section 7.4
+- type: table
+  title: Physical Layer Protocols (1 file)
+  headers:
+  - File
+  - Description
+  - Lines
+  - States
+  rows:
+  - - protocols/link_training.ksy
+    - Link training state machine
+    - '96'
+    - Training sequence for link initialization
+- type: section_header
+  title: Security Layer
+  subtitle: Authentication, Encryption, and Key Management (5 KSY Files)
+- type: table
+  title: Security Layer Formats (3 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - Spec Reference
+  rows:
+  - - authentication.ksy
+    - Authentication format
+    - '246'
+    - UALink200 Section 9.3, Tables 9-1, 9-2
+  - - encryption.ksy
+    - Encryption format
+    - '483'
+    - UALink200 Section 9.5, Tables 9-4 through 9-7
+  - - iv_format.ksy
+    - Initialization vector
+    - '216'
+    - UALink200 Section 9.4, Table 9-3
+- type: table
+  title: Security Layer Protocols (2 files)
+  headers:
+  - File
+  - Description
+  - Lines
+  - States
+  rows:
+  - - protocols/key_derivation.ksy
+    - Key derivation state machine
+    - '359'
+    - KDF per Figure 9-8
+  - - protocols/key_rotation.ksy
+    - Key rotation state machine
+    - '395'
+    - Key swap per Figures 9-9, 9-11, 9-12
+- type: bullet_list
+  title: Security Features
+  items:
+  - AES-GCM encryption for data confidentiality
+  - Authentication tags for data integrity
+  - Three independent IV streams (Request, Read Response, Write Response)
+  - Key derivation function (KDF) for master/derived keys
+  - Key rotation protocol for periodic key refresh
+  - 'Modes: No security, Encryption only, Encryption + Integrity'
+- type: section_header
+  title: Protocol State Machines
+  subtitle: 11 State Machines Across All Layers
+- type: table
+  title: All UALink State Machines
+  headers:
+  - Layer
+  - File
+  - State Machine
+  - Key States
+  rows:
+  - - UPLI
+    - protocols/connection_handshake.ksy
+    - Connection Handshake
+    - IDLE, CONNECTING, CONNECTED, ERROR
+  - - UPLI
+    - protocols/flow_control.ksy
+    - Flow Control
+    - Credit-based flow management
+  - - Transaction
+    - protocols/address_cache.ksy
+    - Address Cache
+    - Cache hit/miss handling
+  - - Transaction
+    - protocols/compression.ksy
+    - Compression
+    - Field compression states
+  - - Data Link
+    - protocols/link_state.ksy
+    - Link State
+    - DL_FAULT, DL_IDLE, DL_NOP, DL_UP, DL_PWRDN
+  - - Data Link
+    - protocols/link_resiliency.ksy
+    - Link Resiliency
+    - Error detection/recovery
+  - - Data Link
+    - protocols/link_level_replay.ksy
+    - Link Level Replay
+    - Flit replay for errors
+  - - Data Link
+    - protocols/link_folding.ksy
+    - Link Folding
+    - Dynamic width adjustment
+  - - Physical
+    - protocols/link_training.ksy
+    - Link Training
+    - Training sequence states
+  - - Security
+    - protocols/key_derivation.ksy
+    - Key Derivation
+    - KDF state machine
+  - - Security
+    - protocols/key_rotation.ksy
+    - Key Rotation
+    - Key swap flow states
+- type: section_header
+  title: Packet Variant Matrix
+  subtitle: Flit Types and Half-Flit Encodings
+- type: table
+  title: TL Flit Half-Flit Types
+  headers:
+  - Message Bits
+  - Half-Flit Type
+  - Content
+  - Size
+  rows:
+  - - '00'
+    - Control Half-Flit
+    - Request/Response fields
+    - 32 bytes
+  - - '01'
+    - Data Half-Flit
+    - Payload data
+    - 32 bytes
+  - - '10'
+    - Message Half-Flit
+    - Message indicator bits
+    - 32 bytes
+  - - '11'
+    - Reserved
+    - Reserved for future use
+    - 32 bytes
+- type: table
+  title: DL Flit Types
+  headers:
+  - Type
+  - Description
+  - Header Format
+  - Use Case
+  rows:
+  - - Payload Flit
+    - Contains TL Flits and/or DL messages
+    - Explicit Sequence Header
+    - Normal data transfer
+  - - NOP Flit
+    - All segment headers = 0, all payloads = 0
+    - Explicit Sequence Header
+    - Link idle/keepalive
+  - - Command Flit
+    - Special header format for replay control
+    - Command Header
+    - Error recovery
+- type: table
+  title: Response Field Variants
+  headers:
+  - Variant
+  - Size
+  - Spec Table
+  - Use Case
+  rows:
+  - - Uncompressed Response
+    - 64 bits (2 sectors)
+    - Table 5-30
+    - Standard responses
+  - - Compressed Single-Beat
+    - 32 bits (1 sector)
+    - Table 5-34
+    - Single-beat compressed
+  - - Compressed Multi-Beat
+    - 32 bits (1 sector)
+    - Table 5-36
+    - Multi-beat compressed
+- type: section_header
+  title: Detailed Packet Structures
+  subtitle: TL Flit, DL Flit, and Segment Header Layouts
+- type: table
+  title: TL Flit Structure (64 bytes)
+  headers:
+  - Field
+  - Offset
+  - Size
+  - Description
+  rows:
+  - - half_flit_0
+    - '0'
+    - 32 bytes
+    - First Half-Flit (type per Message[0] bits)
+  - - half_flit_1
+    - '32'
+    - 32 bytes
+    - Second Half-Flit (type per Message[1] bits)
+- type: table
+  title: DL Flit Structure (640 bytes)
+  headers:
+  - Field
+  - Offset
+  - Size
+  - Description
+  rows:
+  - - flit_header
+    - '0'
+    - 3 bytes
+    - Sequence numbers, operation type
+  - - segment_0
+    - '3'
+    - 129 bytes
+    - 1B header + 128B payload (32 sectors)
+  - - segment_1
+    - '132'
+    - 129 bytes
+    - 1B header + 128B payload (32 sectors)
+  - - segment_2
+    - '261'
+    - 129 bytes
+    - 1B header + 128B payload (32 sectors)
+  - - segment_3
+    - '390'
+    - 125 bytes
+    - 1B header + 124B payload (31 sectors)
+  - - segment_4
+    - '515'
+    - 121 bytes
+    - 1B header + 120B payload (30 sectors)
+  - - crc
+    - '636'
+    - 4 bytes
+    - CRC-32 per IEEE 802.3
+- type: table
+  title: Segment Header Structure (1 byte)
+  headers:
+  - Bit
+  - Field
+  - Description
+  rows:
+  - - '0'
+    - dl_alt_sector
+    - DL alternative sector present
+  - - '1'
+    - reserved
+    - Reserved (must be 0)
+  - - '3:2'
+    - message_0
+    - TL Flit[0] message indicators
+  - - '4'
+    - tl_flit_0
+    - TL Flit[0] present
+  - - '6:5'
+    - message_1
+    - TL Flit[1] message indicators
+  - - '7'
+    - tl_flit_1
+    - TL Flit[1] present
+- type: section_header
+  title: Header Overhead Summary
+  subtitle: Protocol Overhead Analysis
+- type: table
+  title: Per-Layer Header Overhead
+  headers:
+  - Layer
+  - Header Size
+  - Payload Capacity
+  - Overhead %
+  rows:
+  - - TL Flit
+    - 0 bytes (type in DL)
+    - 64 bytes
+    - 0%
+  - - DL Flit
+    - 8 bytes (3B header + 5B segment headers)
+    - 628 bytes payload + 4B CRC
+    - 1.9%
+  - - DL Flit (total)
+    - 12 bytes (headers + CRC)
+    - 628 bytes
+    - 1.9%
+  - - Security (Auth Tag)
+    - 16 bytes per TL Flit
+    - Variable
+    - Variable
+- type: table
+  title: DL Flit Segment Allocation
+  headers:
+  - Segment
+  - Header
+  - Payload
+  - Sectors
+  - Total
+  rows:
+  - - Segment 0
+    - 1 byte
+    - 128 bytes
+    - '32'
+    - 129 bytes
+  - - Segment 1
+    - 1 byte
+    - 128 bytes
+    - '32'
+    - 129 bytes
+  - - Segment 2
+    - 1 byte
+    - 128 bytes
+    - '32'
+    - 129 bytes
+  - - Segment 3
+    - 1 byte
+    - 124 bytes
+    - '31'
+    - 125 bytes
+  - - Segment 4
+    - 1 byte
+    - 120 bytes
+    - '30'
+    - 121 bytes
+  - - Total
+    - 5 bytes
+    - 628 bytes
+    - '157'
+    - 633 bytes
+- type: section_header
+  title: Datamodel Coverage
+  subtitle: All 38 UALink KSY Files
+- type: table
+  title: UPLI Layer Files (8 total)
+  headers:
+  - File Path
+  - Lines
+  - Category
+  rows:
+  - - upli/commands.ksy
+    - '221'
+    - Format
+  - - upli/request_channel.ksy
+    - '338'
+    - Format
+  - - upli/originator_data_channel.ksy
+    - '124'
+    - Format
+  - - upli/read_response_channel.ksy
+    - '172'
+    - Format
+  - - upli/write_response_channel.ksy
+    - '134'
+    - Format
+  - - upli/status_codes.ksy
+    - '139'
+    - Format
+  - - upli/protocols/connection_handshake.ksy
+    - '182'
+    - Protocol
+  - - upli/protocols/flow_control.ksy
+    - '178'
+    - Protocol
+- type: table
+  title: Transaction Layer Files (9 total)
+  headers:
+  - File Path
+  - Lines
+  - Category
+  rows:
+  - - transaction/tl_flit.ksy
+    - '144'
+    - Format
+  - - transaction/control_half_flit.ksy
+    - '111'
+    - Format
+  - - transaction/data_half_flit.ksy
+    - '142'
+    - Format
+  - - transaction/message_half_flit.ksy
+    - '148'
+    - Format
+  - - transaction/request_field.ksy
+    - '133'
+    - Format
+  - - transaction/response_field.ksy
+    - '317'
+    - Format
+  - - transaction/flow_control_field.ksy
+    - '127'
+    - Format
+  - - transaction/protocols/compression.ksy
+    - '76'
+    - Protocol
+  - - transaction/protocols/address_cache.ksy
+    - '85'
+    - Protocol
+- type: table
+  title: Data Link Layer Files (12 total)
+  headers:
+  - File Path
+  - Lines
+  - Category
+  rows:
+  - - datalink/dl_flit.ksy
+    - '233'
+    - Format
+  - - datalink/flit_header.ksy
+    - '173'
+    - Format
+  - - datalink/segment_header.ksy
+    - '71'
+    - Format
+  - - datalink/crc.ksy
+    - '36'
+    - Format
+  - - datalink/messages/control_messages.ksy
+    - '62'
+    - Message
+  - - datalink/messages/basic_messages.ksy
+    - '70'
+    - Message
+  - - datalink/messages/uart_messages.ksy
+    - '63'
+    - Message
+  - - datalink/messages/vendor_defined.ksy
+    - '49'
+    - Message
+  - - datalink/protocols/link_state.ksy
+    - '209'
+    - Protocol
+  - - datalink/protocols/link_resiliency.ksy
+    - '89'
+    - Protocol
+  - - datalink/protocols/link_level_replay.ksy
+    - '145'
+    - Protocol
+  - - datalink/protocols/link_folding.ksy
+    - '98'
+    - Protocol
+- type: table
+  title: Physical Layer Files (4 total)
+  headers:
+  - File Path
+  - Lines
+  - Category
+  rows:
+  - - physical/alignment_markers.ksy
+    - '43'
+    - Format
+  - - physical/control_ordered_sets.ksy
+    - '70'
+    - Format
+  - - physical/reconciliation_sublayer.ksy
+    - '46'
+    - Format
+  - - physical/protocols/link_training.ksy
+    - '96'
+    - Protocol
+- type: table
+  title: Security Layer Files (5 total)
+  headers:
+  - File Path
+  - Lines
+  - Category
+  rows:
+  - - security/authentication.ksy
+    - '246'
+    - Format
+  - - security/encryption.ksy
+    - '483'
+    - Format
+  - - security/iv_format.ksy
+    - '216'
+    - Format
+  - - security/protocols/key_derivation.ksy
+    - '359'
+    - Protocol
+  - - security/protocols/key_rotation.ksy
+    - '395'
+    - Protocol
+- type: section_header
+  title: Detailed Header Formats
+  subtitle: Field-level documentation with packet diagrams
+- type: section_header
+  title: UALink DL Flit Header
+  subtitle: 3 bytes (24 bits)
+- type: code_block
+  title: ualink_flit_header Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                 header_bytes                                 |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_flit_header Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - header_bytes
+    - '24'
+    - '0'
+    - ''
+    - 'Raw 3-byte flit header. Use instances to extract fields and '
+- type: section_header
+  title: UALink Data Link Layer Flit
+  subtitle: 640 bytes (5120 bits)
+- type: code_block
+  title: ualink_dl_flit Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                  flit_header                  |   segment_0  |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_0                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_1                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |   segment_1   |                   segment_2                  |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_2                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |           segment_2           |           segment_3          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_3                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                   segment_3                   |   segment_4  |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           segment_4                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                              crc                             |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_dl_flit Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - flit_header
+    - '24'
+    - '0'
+    - ''
+    - Flit Header (3 bytes / 24 bits).
+  - - segment_0
+    - '1032'
+    - '24'
+    - ''
+    - Segment 0 (129 bytes = 1 byte header + 128 bytes payload).
+  - - segment_1
+    - '1032'
+    - '1056'
+    - ''
+    - Segment 1 (129 bytes = 1 byte header + 128 bytes payload).
+  - - segment_2
+    - '1032'
+    - '2088'
+    - ''
+    - Segment 2 (129 bytes = 1 byte header + 128 bytes payload).
+  - - segment_3
+    - '1000'
+    - '3120'
+    - ''
+    - Segment 3 (125 bytes = 1 byte header + 124 bytes payload).
+  - - segment_4
+    - '968'
+    - '4120'
+    - ''
+    - Segment 4 (121 bytes = 1 byte header + 120 bytes payload).
+  - - crc
+    - '32'
+    - '5088'
+    - ''
+    - CRC-32 (4 bytes / 32 bits).
+- type: section_header
+  title: UALink DL Segment Header
+  subtitle: 1 bytes (8 bits)
+- type: code_block
+  title: ualink_segment_header Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |d|r|mes|t|mes|t                                               |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_segment_header Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - dl_alt_sector
+    - '1'
+    - '0'
+    - b1
+    - DL alternative sector present
+  - - reserved
+    - '1'
+    - '1'
+    - b1
+    - Reserved bit
+  - - message_0
+    - '2'
+    - '2'
+    - b2
+    - TL Flit[0] message indicators
+  - - tl_flit_0
+    - '1'
+    - '4'
+    - b1
+    - TL Flit[0] present
+  - - message_1
+    - '2'
+    - '5'
+    - b2
+    - TL Flit[1] message indicators
+  - - tl_flit_1
+    - '1'
+    - '7'
+    - b1
+    - TL Flit[1] present
+- type: section_header
+  title: UALink Transaction Layer Flit
+  subtitle: 64 bytes (512 bits)
+- type: code_block
+  title: ualink_tl_flit Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_0                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                          half_flit_1                         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_tl_flit Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - half_flit_0
+    - '256'
+    - '0'
+    - ''
+    - First Half-Flit (32 bytes / 256 bits).
+  - - half_flit_1
+    - '256'
+    - '256'
+    - ''
+    - Second Half-Flit (32 bytes / 256 bits).
+- type: section_header
+  title: UALink Message Half-Flit
+  subtitle: 32 bytes (256 bits)
+- type: code_block
+  title: ualink_message_half_flit Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                        message_content                       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_message_half_flit Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - message_content
+    - '256'
+    - '0'
+    - ''
+    - Message Content (256 bits / 8 sectors × 32 bits each).
+- type: section_header
+  title: UALink Data Half-Flit
+  subtitle: 32 bytes (256 bits)
+- type: code_block
+  title: ualink_data_half_flit Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            payload                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_data_half_flit Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - payload
+    - '256'
+    - '0'
+    - ''
+    - Data Payload (256 bits / 8 sectors × 32 bits each).
+- type: section_header
+  title: UALink Control Half-Flit
+  subtitle: 32 bytes (256 bits)
+- type: code_block
+  title: ualink_control_half_flit Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            sectors                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_control_half_flit Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - sectors
+    - '256'
+    - '0'
+    - ''
+    - Control Half-Flit Sectors (256 bits / 8 sectors × 32 bits ea
+- type: section_header
+  title: UALink Flow Control Field
+  subtitle: 4 bytes (32 bits)
+- type: code_block
+  title: ualink_flow_control_field Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |req_cmd_cre|rsp_cmd_cre|req_data_credit|rsp_data_credit|reserv|\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ualink_flow_control_field Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - req_cmd_credit
+    - '6'
+    - '0'
+    - b6
+    - Request command credits (3-bit count + 2-bit VC + 1-bit Pool
+  - - rsp_cmd_credit
+    - '6'
+    - '6'
+    - b6
+    - Response command credits (3-bit count + 2-bit VC + 1-bit Poo
+  - - req_data_credit
+    - '8'
+    - '12'
+    - b8
+    - Request data credits (5-bit count + 2-bit VC + 1-bit Pool)
+  - - rsp_data_credit
+    - '8'
+    - '20'
+    - b8
+    - Response data credits (5-bit count + 2-bit VC + 1-bit Pool)
+  - - reserved
+    - '4'
+    - '28'
+    - b4
+    - Reserved bits
+- type: section_header
+  title: References
+  subtitle: Specification Documents and Resources
+- type: bullet_list
+  title: Primary References
+  items:
+  - UALink 200 Specification v1.0 (UALink Consortium, April 2025)
+  - UALink 1.5 DLPL Specification (UALink Consortium, January 2026)
+  - IEEE 802.3 Clause 91, 119, 172 (FEC codeword sizing)
+  - IEEE 802.3 Clause 3.2.9 (CRC-32 polynomial)
+- type: bullet_list
+  title: Datamodel Resources
+  items:
+  - 'Datamodel Directory: earlysim/datamodel/protocols/ualink/'
+  - 'Analysis Document: analysis/packet_taxonomy/packet_taxonomy_ualink.md'
+  - 'Issues Document: analysis/ualink/ualink_issues.md'
+  - 'Metadata: earlysim/datamodel/protocols/ualink/metadata.yaml'
+- type: table
+  title: Specification Traceability
+  headers:
+  - Spec
+  - Version
+  - Date
+  - Coverage
+  rows:
+  - - UALink 200
+    - v1.0
+    - '2025-04-08'
+    - All 38 KSY files
+  - - UALink DLPL
+    - v1.5
+    - '2026-01-12'
+    - segment_header.ksy
+metadata:
+  generated_from: analysis/packet_taxonomy/packet_taxonomy_ualink.md
+  datamodel_path: earlysim/datamodel/protocols/ualink/
+  total_ksy_files: 38
+  total_lines: 6023
+  layers:
+    upli:
+      formats: 6
+      protocols: 2
+      total: 8
+    transaction:
+      formats: 7
+      protocols: 2
+      total: 9
+    datalink:
+      formats: 4
+      messages: 4
+      protocols: 4
+      total: 12
+    physical:
+      formats: 3
+      protocols: 1
+      total: 4
+    security:
+      formats: 3
+      protocols: 2
+      total: 5
+  state_machines: 11
+  pmr_support: false
+  reference_only: true

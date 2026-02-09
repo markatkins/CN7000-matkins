@@ -1,0 +1,1172 @@
+title: 'PMR Packet Taxonomy: Ethernet Technical Report'
+subtitle: IEEE 802.3 and IP Protocol Formats
+presenter:
+  name: Packet Taxonomy Team
+  info: Cornelis Networks Engineering
+sections:
+- type: section_header
+  title: Overview
+  subtitle: Standard Ethernet Protocol Stack
+- type: bullets
+  title: Ethernet Protocol Coverage
+  items:
+  - 12 KSY datamodel files defining standard Ethernet formats
+  - 'Link Layer: Ethernet II, IEEE 802.3, VLAN 802.1Q, LLC, SNAP'
+  - 'Network Layer: IPv4 (RFC 791), IPv6 (RFC 8200)'
+  - 'Transport Layer: TCP (RFC 793), UDP (RFC 768)'
+  - 'RSS Offload: Hash algorithm, Toeplitz key, hash input formats'
+- type: bullets
+  title: PMR Use Cases
+  items:
+  - RoCEv2 encapsulation (UDP/IP/Ethernet)
+  - Standard Ethernet NIC offload
+  - VxLAN+ overlay networking
+  - Management traffic processing
+  - Receive Side Scaling (RSS) for multi-queue distribution
+- type: section_header
+  title: Protocol Architecture
+  subtitle: OSI Layer Mapping
+- type: table
+  title: OSI Layer to Datamodel Mapping
+  headers:
+  - OSI Layer
+  - Protocol
+  - KSY File
+  - Size (bytes)
+  rows:
+  - - Layer 2 (Link)
+    - Ethernet II
+    - link/ethernet_ii.ksy
+    - '14'
+  - - Layer 2 (Link)
+    - IEEE 802.3
+    - link/ethernet_802_3.ksy
+    - '14'
+  - - Layer 2 (Link)
+    - VLAN 802.1Q
+    - link/vlan_802_1q.ksy
+    - '4'
+  - - Layer 2 (Link)
+    - LLC
+    - link/llc.ksy
+    - 3-4
+  - - Layer 2 (Link)
+    - SNAP
+    - link/snap.ksy
+    - '5'
+  - - Layer 3 (Network)
+    - IPv4
+    - network/ipv4.ksy
+    - 20-60
+  - - Layer 3 (Network)
+    - IPv6
+    - network/ipv6.ksy
+    - '40'
+  - - Layer 4 (Transport)
+    - TCP
+    - transport/tcp.ksy
+    - 20-60
+  - - Layer 4 (Transport)
+    - UDP
+    - transport/udp.ksy
+    - '8'
+  - - Offload
+    - RSS Hash Algorithm
+    - rss/hash_algorithm.ksy
+    - '4'
+  - - Offload
+    - RSS Toeplitz Key
+    - rss/toeplitz_key.ksy
+    - '40'
+  - - Offload
+    - RSS Hash Input
+    - rss/hash_input.ksy
+    - 8-36
+- type: section_header
+  title: Header Building Blocks
+  subtitle: All 12 Ethernet KSY Files
+- type: table
+  title: Link Layer Headers (5 files)
+  headers:
+  - File
+  - Protocol
+  - Size
+  - Spec Reference
+  rows:
+  - - ethernet_ii.ksy
+    - Ethernet II (DIX)
+    - 14 bytes
+    - IEEE 802.3-2022 Section 3.1.1
+  - - ethernet_802_3.ksy
+    - IEEE 802.3 MAC Frame
+    - 14 bytes
+    - IEEE 802.3-2022 Section 3.1.1
+  - - vlan_802_1q.ksy
+    - VLAN Tag (802.1Q)
+    - 4 bytes
+    - IEEE 802.1Q-2022 Section 9
+  - - llc.ksy
+    - LLC Header (802.2)
+    - 3-4 bytes
+    - IEEE 802.2 / ISO 8802-2
+  - - snap.ksy
+    - SNAP Extension
+    - 5 bytes
+    - IEEE 802 / RFC 1042
+- type: table
+  title: Network Layer Headers (2 files)
+  headers:
+  - File
+  - Protocol
+  - Size
+  - Spec Reference
+  rows:
+  - - ipv4.ksy
+    - IPv4 Header
+    - 20-60 bytes
+    - RFC 791 Section 3.1
+  - - ipv6.ksy
+    - IPv6 Header
+    - 40 bytes
+    - RFC 8200 Section 3
+- type: table
+  title: Transport Layer Headers (2 files)
+  headers:
+  - File
+  - Protocol
+  - Size
+  - Spec Reference
+  rows:
+  - - tcp.ksy
+    - TCP Header
+    - 20-60 bytes
+    - RFC 793 Section 3.1
+  - - udp.ksy
+    - UDP Header
+    - 8 bytes
+    - RFC 768
+- type: table
+  title: RSS Offload Configuration (3 files)
+  headers:
+  - File
+  - Purpose
+  - Size
+  - CSR Reference
+  rows:
+  - - hash_algorithm.ksy
+    - Algorithm Selection
+    - 4 bytes
+    - rx_classify.pdp_hash_cfg @ 0x3014
+  - - toeplitz_key.ksy
+    - Toeplitz Hash Key
+    - 40 bytes
+    - ethernet.rss_hash_key[0-9] @ 0x4010-0x4034
+  - - hash_input.ksy
+    - Hash Input Formats
+    - 8-36 bytes
+    - N/A (data format)
+- type: section_header
+  title: Packet Variant Matrix
+  subtitle: Frame Types and Encapsulations
+- type: table
+  title: Ethernet Frame Types
+  headers:
+  - Frame Type
+  - Discriminator
+  - Header Stack
+  - Use Case
+  rows:
+  - - Ethernet II
+    - EtherType >= 0x0600
+    - Eth II + IP + TCP/UDP
+    - Standard data traffic
+  - - IEEE 802.3
+    - Length < 0x0600
+    - 802.3 + LLC + [SNAP]
+    - Control protocols (STP, CDP)
+  - - VLAN Tagged
+    - EtherType = 0x8100
+    - Eth II + VLAN + IP
+    - Network segmentation
+  - - QinQ
+    - EtherType = 0x88A8
+    - Eth II + VLAN + VLAN + IP
+    - Provider bridging
+- type: table
+  title: Common EtherType Values
+  headers:
+  - EtherType
+  - Protocol
+  - Next Header
+  rows:
+  - - '0x0800'
+    - IPv4
+    - network/ipv4.ksy
+  - - '0x86DD'
+    - IPv6
+    - network/ipv6.ksy
+  - - '0x8100'
+    - VLAN 802.1Q
+    - link/vlan_802_1q.ksy
+  - - '0x88A8'
+    - QinQ (802.1ad)
+    - link/vlan_802_1q.ksy
+  - - '0x0806'
+    - ARP
+    - N/A
+- type: table
+  title: IP Protocol Numbers
+  headers:
+  - Protocol
+  - Value
+  - Next Header
+  rows:
+  - - TCP
+    - '6'
+    - transport/tcp.ksy
+  - - UDP
+    - '17'
+    - transport/udp.ksy
+  - - ICMP
+    - '1'
+    - N/A
+  - - ICMPv6
+    - '58'
+    - N/A
+- type: section_header
+  title: Detailed Packet Structures
+  subtitle: Wire Format Specifications
+- type: table
+  title: Ethernet II Header (14 bytes) - ethernet_ii.ksy
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - dst_mac
+    - '48'
+    - 0-5
+    - Destination MAC address
+  - - src_mac
+    - '48'
+    - 6-11
+    - Source MAC address
+  - - ether_type
+    - '16'
+    - 12-13
+    - Protocol type (>= 0x0600)
+- type: table
+  title: VLAN 802.1Q Tag (4 bytes) - vlan_802_1q.ksy
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - tpid
+    - '16'
+    - 0-1
+    - Tag Protocol ID (0x8100)
+  - - pcp
+    - '3'
+    - 2[7:5]
+    - Priority Code Point (0-7)
+  - - dei
+    - '1'
+    - 2[4]
+    - Drop Eligible Indicator
+  - - vid
+    - '12'
+    - 2[3:0],3
+    - VLAN Identifier (0-4095)
+- type: table
+  title: IPv4 Header (20-60 bytes) - ipv4.ksy
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - version
+    - '4'
+    - 0[7:4]
+    - IP version (4)
+  - - ihl
+    - '4'
+    - 0[3:0]
+    - Header length (words)
+  - - dscp
+    - '6'
+    - 1[7:2]
+    - Differentiated Services
+  - - ecn
+    - '2'
+    - 1[1:0]
+    - ECN bits
+  - - total_length
+    - '16'
+    - 2-3
+    - Total packet length
+  - - identification
+    - '16'
+    - 4-5
+    - Fragment ID
+  - - flags
+    - '3'
+    - 6[7:5]
+    - DF, MF flags
+  - - frag_offset
+    - '13'
+    - 6[4:0],7
+    - Fragment offset
+  - - ttl
+    - '8'
+    - '8'
+    - Time to live
+  - - protocol
+    - '8'
+    - '9'
+    - Next protocol
+  - - checksum
+    - '16'
+    - 10-11
+    - Header checksum
+  - - src_ip
+    - '32'
+    - 12-15
+    - Source IP address
+  - - dst_ip
+    - '32'
+    - 16-19
+    - Destination IP address
+- type: table
+  title: IPv6 Header (40 bytes) - ipv6.ksy
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - version
+    - '4'
+    - 0[7:4]
+    - IP version (6)
+  - - traffic_class
+    - '8'
+    - 0[3:0],1[7:4]
+    - Traffic class (DSCP+ECN)
+  - - flow_label
+    - '20'
+    - 1[3:0],2-3
+    - Flow label
+  - - payload_length
+    - '16'
+    - 4-5
+    - Payload length
+  - - next_header
+    - '8'
+    - '6'
+    - Next header type
+  - - hop_limit
+    - '8'
+    - '7'
+    - Hop limit (TTL)
+  - - src_addr
+    - '128'
+    - 8-23
+    - Source address
+  - - dst_addr
+    - '128'
+    - 24-39
+    - Destination address
+- type: table
+  title: TCP Header (20-60 bytes) - tcp.ksy
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - src_port
+    - '16'
+    - 0-1
+    - Source port
+  - - dst_port
+    - '16'
+    - 2-3
+    - Destination port
+  - - seq_num
+    - '32'
+    - 4-7
+    - Sequence number
+  - - ack_num
+    - '32'
+    - 8-11
+    - Acknowledgment number
+  - - data_offset
+    - '4'
+    - 12[7:4]
+    - Header length (words)
+  - - reserved
+    - '3'
+    - 12[3:1]
+    - Reserved
+  - - flags
+    - '9'
+    - 12[0],13
+    - TCP flags (NS,CWR,ECE,URG,ACK,PSH,RST,SYN,FIN)
+  - - window
+    - '16'
+    - 14-15
+    - Window size
+  - - checksum
+    - '16'
+    - 16-17
+    - TCP checksum
+  - - urgent_ptr
+    - '16'
+    - 18-19
+    - Urgent pointer
+- type: table
+  title: UDP Header (8 bytes) - udp.ksy
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Description
+  rows:
+  - - src_port
+    - '16'
+    - 0-1
+    - Source port
+  - - dst_port
+    - '16'
+    - 2-3
+    - Destination port
+  - - length
+    - '16'
+    - 4-5
+    - UDP length
+  - - checksum
+    - '16'
+    - 6-7
+    - UDP checksum
+- type: section_header
+  title: RSS Hash Algorithm
+  subtitle: Receive Side Scaling Configuration
+- type: table
+  title: Hash Algorithm Selection - hash_algorithm.ksy
+  headers:
+  - Value
+  - Algorithm
+  - Key Required
+  - Use Case
+  rows:
+  - - '0'
+    - CRC32
+    - 'No'
+    - Default at reset, good distribution
+  - - '1'
+    - XOR
+    - 'No'
+    - Testing/debugging only, poor distribution
+  - - '2'
+    - Toeplitz
+    - Yes (40 bytes)
+    - Production, per Microsoft RSS spec
+- type: table
+  title: Hash Input Formats - hash_input.ksy
+  headers:
+  - Hash Type
+  - Input Size
+  - Fields
+  - Min Key Size
+  rows:
+  - - IPv4 L3
+    - 8 bytes
+    - src_ip (4) + dst_ip (4)
+    - 12 bytes
+  - - IPv4 L4
+    - 12 bytes
+    - src_ip (4) + dst_ip (4) + ports (4)
+    - 16 bytes
+  - - IPv6 L3
+    - 32 bytes
+    - src_ip (16) + dst_ip (16)
+    - 36 bytes
+  - - IPv6 L4
+    - 36 bytes
+    - src_ip (16) + dst_ip (16) + ports (4)
+    - 40 bytes
+- type: table
+  title: Toeplitz Key CSR Layout - toeplitz_key.ksy
+  headers:
+  - Register
+  - Offset
+  - Key Bytes
+  rows:
+  - - rss_hash_key[0]
+    - '0x4010'
+    - 0-3
+  - - rss_hash_key[1]
+    - '0x4014'
+    - 4-7
+  - - rss_hash_key[2]
+    - '0x4018'
+    - 8-11
+  - - rss_hash_key[3]
+    - '0x401C'
+    - 12-15
+  - - rss_hash_key[4]
+    - '0x4020'
+    - 16-19
+  - - rss_hash_key[5]
+    - '0x4024'
+    - 20-23
+  - - rss_hash_key[6]
+    - '0x4028'
+    - 24-27
+  - - rss_hash_key[7]
+    - '0x402C'
+    - 28-31
+  - - rss_hash_key[8]
+    - '0x4030'
+    - 32-35
+  - - rss_hash_key[9]
+    - '0x4034'
+    - 36-39
+- type: bullets
+  title: Toeplitz Algorithm
+  items:
+  - hash = 0
+  - 'for each bit i in input: if input_bit[i] == 1: hash ^= key[i : i+32]'
+  - 'Queue selection: queue_id = hash_result % num_queues'
+  - 40-byte key covers all input types (IPv4/IPv6 L3/L4)
+- type: section_header
+  title: Header Overhead Summary
+  subtitle: Encapsulation Costs
+- type: table
+  title: Common Packet Configurations
+  headers:
+  - Configuration
+  - Headers
+  - Total Overhead
+  rows:
+  - - IPv4/TCP (no VLAN)
+    - Eth II (14) + IPv4 (20) + TCP (20)
+    - 54 bytes
+  - - IPv4/UDP (no VLAN)
+    - Eth II (14) + IPv4 (20) + UDP (8)
+    - 42 bytes
+  - - IPv4/TCP (VLAN)
+    - Eth II (14) + VLAN (4) + IPv4 (20) + TCP (20)
+    - 58 bytes
+  - - IPv6/TCP (no VLAN)
+    - Eth II (14) + IPv6 (40) + TCP (20)
+    - 74 bytes
+  - - IPv6/UDP (no VLAN)
+    - Eth II (14) + IPv6 (40) + UDP (8)
+    - 62 bytes
+  - - IPv6/TCP (VLAN)
+    - Eth II (14) + VLAN (4) + IPv6 (40) + TCP (20)
+    - 78 bytes
+  - - 802.3/LLC/SNAP/IPv4
+    - 802.3 (14) + LLC (3) + SNAP (5) + IPv4 (20)
+    - 42 bytes
+- type: table
+  title: Maximum Header Sizes
+  headers:
+  - Header
+  - Minimum
+  - Maximum
+  - Variable Component
+  rows:
+  - - Ethernet II
+    - 14 bytes
+    - 14 bytes
+    - Fixed
+  - - VLAN 802.1Q
+    - 4 bytes
+    - 4 bytes
+    - Fixed
+  - - LLC
+    - 3 bytes
+    - 4 bytes
+    - Control field format
+  - - IPv4
+    - 20 bytes
+    - 60 bytes
+    - Options (0-40 bytes)
+  - - IPv6
+    - 40 bytes
+    - 40 bytes
+    - Fixed (extensions separate)
+  - - TCP
+    - 20 bytes
+    - 60 bytes
+    - Options (0-40 bytes)
+  - - UDP
+    - 8 bytes
+    - 8 bytes
+    - Fixed
+- type: section_header
+  title: Datamodel Coverage
+  subtitle: All 12 Ethernet KSY Files
+- type: table
+  title: Complete KSY File Inventory
+  headers:
+  - Category
+  - File Path
+  - Protocol
+  - Lines
+  rows:
+  - - Link
+    - link/ethernet_ii.ksy
+    - Ethernet II (DIX)
+    - '138'
+  - - Link
+    - link/ethernet_802_3.ksy
+    - IEEE 802.3 MAC
+    - '99'
+  - - Link
+    - link/vlan_802_1q.ksy
+    - VLAN 802.1Q
+    - '148'
+  - - Link
+    - link/llc.ksy
+    - LLC (802.2)
+    - '176'
+  - - Link
+    - link/snap.ksy
+    - SNAP Extension
+    - '108'
+  - - Network
+    - network/ipv4.ksy
+    - IPv4
+    - '219'
+  - - Network
+    - network/ipv6.ksy
+    - IPv6
+    - '191'
+  - - Transport
+    - transport/tcp.ksy
+    - TCP
+    - '199'
+  - - Transport
+    - transport/udp.ksy
+    - UDP
+    - '137'
+  - - RSS
+    - rss/hash_algorithm.ksy
+    - Hash Algorithm
+    - '146'
+  - - RSS
+    - rss/toeplitz_key.ksy
+    - Toeplitz Key
+    - '216'
+  - - RSS
+    - rss/hash_input.ksy
+    - Hash Input Formats
+    - '228'
+- type: bullets
+  title: Datamodel Features
+  items:
+  - 'x-spec: Specification traceability (IEEE, RFC references)'
+  - 'x-packet: Layer, size, constraints, usage metadata'
+  - 'x-related-headers: Cross-references between protocols'
+  - 'x-csr: CSR register mappings for RSS configuration'
+  - 'instances: Computed fields (flags, validation helpers)'
+  - 'enums: Protocol-specific enumeration values'
+- type: section_header
+  title: Detailed Header Formats
+  subtitle: Field-level documentation with packet diagrams
+- type: section_header
+  title: Ethernet II Frame
+  subtitle: 14 bytes (112 bits)
+- type: code_block
+  title: ethernet_ii Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            dst_mac                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |            dst_mac            |            src_mac           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            src_mac                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |          ether_type                                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ethernet_ii Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - dst_mac
+    - '48'
+    - '0'
+    - ''
+    - Destination MAC address (6 bytes)
+  - - src_mac
+    - '48'
+    - '48'
+    - ''
+    - Source MAC address (6 bytes)
+  - - ether_type
+    - '16'
+    - '96'
+    - u2
+    - EtherType field (2 bytes, big-endian)
+  - - payload
+    - '0'
+    - '112'
+    - ''
+    - Frame payload (variable length)
+- type: section_header
+  title: IEEE 802.1Q VLAN Tag
+  subtitle: 4 bytes (32 bits)
+- type: code_block
+  title: vlan_802_1q Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |             tpid              |              tci             |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |          ether_type                                          |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: vlan_802_1q Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - tpid
+    - '16'
+    - '0'
+    - u2
+    - Tag Protocol Identifier (TPID)
+  - - tci
+    - '16'
+    - '16'
+    - u2
+    - Tag Control Information (PCP + DEI + VID)
+  - - ether_type
+    - '16'
+    - '32'
+    - u2
+    - EtherType of encapsulated payload
+- type: section_header
+  title: IEEE 802.2 LLC Header
+  subtitle: 4 bytes (32 bits)
+- type: code_block
+  title: llc Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |     dsap      |     ssap      |    control    |  control_ext |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: llc Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - dsap
+    - '8'
+    - '0'
+    - u1
+    - Destination Service Access Point
+  - - ssap
+    - '8'
+    - '8'
+    - u1
+    - Source Service Access Point
+  - - control
+    - '8'
+    - '16'
+    - u1
+    - Control field (first byte).
+  - - control_ext
+    - '8'
+    - '24'
+    - u1
+    - Extended control field (second byte for I/S-format)
+- type: section_header
+  title: SNAP Extension Header
+  subtitle: 5 bytes (40 bits)
+- type: code_block
+  title: snap Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                      oui                      |  protocol_id |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  protocol_id                                                 |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: snap Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - oui
+    - '24'
+    - '0'
+    - ''
+    - Organizationally Unique Identifier (3 bytes).
+  - - protocol_id
+    - '16'
+    - '24'
+    - u2
+    - Protocol identifier (2 bytes).
+- type: section_header
+  title: IPv6 Header
+  subtitle: 40 bytes (320 bits)
+- type: code_block
+  title: ipv6 Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                         version_tc_fl                        |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |        payload_length         |  next_header  |   hop_limit  |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           src_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           src_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           src_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           src_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           dst_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           dst_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           dst_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           dst_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ipv6 Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - version_tc_fl
+    - '32'
+    - '0'
+    - u4
+    - Version (4 bits) + Traffic Class (8 bits) + Flow Label (20 b
+  - - payload_length
+    - '16'
+    - '32'
+    - u2
+    - Payload length (excludes 40-byte fixed header)
+  - - next_header
+    - '8'
+    - '48'
+    - u1
+    - Next header type (same values as IPv4 protocol field)
+  - - hop_limit
+    - '8'
+    - '56'
+    - u1
+    - Hop limit (equivalent to IPv4 TTL)
+  - - src_addr
+    - '128'
+    - '64'
+    - ''
+    - Source IPv6 address (128 bits)
+  - - dst_addr
+    - '128'
+    - '192'
+    - ''
+    - Destination IPv6 address (128 bits)
+- type: section_header
+  title: UDP Header
+  subtitle: 8 bytes (64 bits)
+- type: code_block
+  title: udp Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |           src_port            |           dst_port           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |            length             |           checksum           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: udp Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - src_port
+    - '16'
+    - '0'
+    - u2
+    - Source port number (0-65535)
+  - - dst_port
+    - '16'
+    - '16'
+    - u2
+    - Destination port number (0-65535)
+  - - length
+    - '16'
+    - '32'
+    - u2
+    - Total length including header (minimum 8)
+  - - checksum
+    - '16'
+    - '48'
+    - u2
+    - UDP checksum (optional in IPv4, mandatory in IPv6)
+- type: section_header
+  title: IEEE 802.3 MAC Frame
+  subtitle: 14 bytes (112 bits)
+- type: code_block
+  title: ethernet_802_3 Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            dst_mac                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |            dst_mac            |            src_mac           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            src_mac                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |            length                                            |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ethernet_802_3 Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - dst_mac
+    - '48'
+    - '0'
+    - ''
+    - Destination MAC address (6 bytes)
+  - - src_mac
+    - '48'
+    - '48'
+    - ''
+    - Source MAC address (6 bytes)
+  - - length
+    - '16'
+    - '96'
+    - u2
+    - Length of LLC data in bytes (must be < 0x0600).
+  - - llc_data
+    - '0'
+    - '112'
+    - ''
+    - LLC header and payload (variable length per length field)
+- type: section_header
+  title: IPv4 Header
+  subtitle: 20 bytes (160 bits)
+- type: code_block
+  title: ipv4 Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  version_ihl  |   dscp_ecn    |         total_length         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |        identification         |     flags_fragment_offset    |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |      ttl      |   protocol    |        header_checksum       |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           src_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                           dst_addr                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: ipv4 Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - version_ihl
+    - '8'
+    - '0'
+    - u1
+    - Version (4 bits) + Internet Header Length (4 bits)
+  - - dscp_ecn
+    - '8'
+    - '8'
+    - u1
+    - DSCP (6 bits) + ECN (2 bits)
+  - - total_length
+    - '16'
+    - '16'
+    - u2
+    - Total packet length including header and data
+  - - identification
+    - '16'
+    - '32'
+    - u2
+    - Fragment identification
+  - - flags_fragment_offset
+    - '16'
+    - '48'
+    - u2
+    - Flags (3 bits) + Fragment Offset (13 bits)
+  - - ttl
+    - '8'
+    - '64'
+    - u1
+    - Time To Live (hop limit)
+  - - protocol
+    - '8'
+    - '72'
+    - u1
+    - Upper layer protocol (6=TCP, 17=UDP, 1=ICMP)
+  - - header_checksum
+    - '16'
+    - '80'
+    - u2
+    - Header checksum (ones' complement)
+  - - src_addr
+    - '32'
+    - '96'
+    - u4
+    - Source IP address
+  - - dst_addr
+    - '32'
+    - '128'
+    - u4
+    - Destination IP address
+  - - options
+    - '0'
+    - '160'
+    - ''
+    - IP options (variable length, if IHL > 5)
+- type: section_header
+  title: TCP Header
+  subtitle: 20 bytes (160 bits)
+- type: code_block
+  title: tcp Packet Layout
+  language: ''
+  code: " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3\
+    \ 4 5 6 7 8 9 0 1\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |           src_port            |           dst_port           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            seq_num                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |                            ack_num                           |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |  data_offset_reserved_flags   |          window_size         |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n\
+    |           checksum            |        urgent_pointer        |\n+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+"
+- type: table
+  title: tcp Field Definitions
+  headers:
+  - Field
+  - Bits
+  - Offset
+  - Type
+  - Description
+  rows:
+  - - src_port
+    - '16'
+    - '0'
+    - u2
+    - Source port number (0-65535)
+  - - dst_port
+    - '16'
+    - '16'
+    - u2
+    - Destination port number (0-65535)
+  - - seq_num
+    - '32'
+    - '32'
+    - u4
+    - Sequence number
+  - - ack_num
+    - '32'
+    - '64'
+    - u4
+    - Acknowledgment number (if ACK flag set)
+  - - data_offset_reserved_flags
+    - '16'
+    - '96'
+    - u2
+    - Data offset (4 bits) + Reserved (3 bits) + Flags (9 bits)
+  - - window_size
+    - '16'
+    - '112'
+    - u2
+    - Window size (receive window)
+  - - checksum
+    - '16'
+    - '128'
+    - u2
+    - TCP checksum (pseudo-header + header + data)
+  - - urgent_pointer
+    - '16'
+    - '144'
+    - u2
+    - Urgent pointer (if URG flag set)
+  - - options
+    - '0'
+    - '160'
+    - ''
+    - TCP options (variable length)
+- type: section_header
+  title: References
+  subtitle: Standards and Specifications
+- type: table
+  title: IEEE Standards
+  headers:
+  - Standard
+  - Title
+  - KSY Files
+  rows:
+  - - IEEE 802.3-2022
+    - Ethernet Standard
+    - ethernet_ii.ksy, ethernet_802_3.ksy
+  - - IEEE 802.1Q-2022
+    - VLAN Bridging
+    - vlan_802_1q.ksy
+  - - IEEE 802.2
+    - Logical Link Control
+    - llc.ksy
+- type: table
+  title: IETF RFCs
+  headers:
+  - RFC
+  - Title
+  - KSY Files
+  rows:
+  - - RFC 791
+    - Internet Protocol (IPv4)
+    - ipv4.ksy
+  - - RFC 8200
+    - Internet Protocol Version 6 (IPv6)
+    - ipv6.ksy
+  - - RFC 793
+    - Transmission Control Protocol (TCP)
+    - tcp.ksy
+  - - RFC 768
+    - User Datagram Protocol (UDP)
+    - udp.ksy
+  - - RFC 1042
+    - IP over IEEE 802 Networks
+    - snap.ksy
+  - - RFC 2474
+    - Differentiated Services (DSCP)
+    - ipv4.ksy, ipv6.ksy
+  - - RFC 3168
+    - Explicit Congestion Notification (ECN)
+    - ipv4.ksy, ipv6.ksy, tcp.ksy
+- type: table
+  title: Other References
+  headers:
+  - Reference
+  - Description
+  - KSY Files
+  rows:
+  - - Microsoft RSS Specification
+    - Receive Side Scaling
+    - hash_algorithm.ksy, toeplitz_key.ksy, hash_input.ksy
+  - - NDIS Documentation
+    - Network Driver Interface
+    - hash_algorithm.ksy, toeplitz_key.ksy
+- type: bullets
+  title: Analysis Document
+  items:
+  - 'Source: analysis/packet_taxonomy/packet_taxonomy_ethernet.md'
+  - 'Datamodel: earlysim/datamodel/protocols/ethernet/'
+  - 'Last Updated: 2026-01-30'

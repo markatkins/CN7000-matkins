@@ -1,0 +1,44 @@
+# Solutions Matrix Rules
+
+## Table Formatting Rules
+
+### Header Rules
+1. Do NOT include "CN7000" in table column headers - it is implied
+2. Column headers should be concise: "Small-Medium Scale", "Large Scale", "Hyperscalar"
+
+### Cell Content Rules
+1. **Minimize characters in cells** - brevity is paramount
+2. Use checkmarks (✓) when a feature is fully supported with no qualifications needed
+3. Use parentheses for qualifications only when necessary, e.g., "(island)" for heterogeneous
+4. Do NOT expand acronyms in table cells - define them in the glossary instead
+5. If both options of a pair are supported (e.g., SDR and Packet Spray), use only ✓
+6. If only one option of a pair is supported, indicate which one in parentheses
+
+### Scale Specifications
+1. **Small-Medium Scale**: Max endpoints ≤10K
+2. **Large Scale**: Max endpoints 10K-93K  
+3. **Hyperscalar**: Max endpoints 100K-1.44M
+4. Always indicate max endpoints per rail assuming 8 rails (e.g., 1.44M/8 = 180K per rail)
+
+### Topology Rules
+1. **Small-Medium Scale**: Single Fat-tree or Rail
+2. **Large Scale**: Fat-Tree Rail
+3. **Hyperscalar**: Fat-Tree Rail
+4. Megafly and Dragonfly are NOT supported for AI workloads (HPC only until otherwise decided)
+
+### Feature Naming Conventions
+1. **FGAR** - Do not expand to "Fine-Grained Adaptive Routing"
+2. **ECAR** - Entropy Controlled Adaptive Routing (not "Enhanced Congestion")
+3. **Dynamic Route Recovery** - Do not call it "Fast Route Recovery" or indicate "dynamic rerouting"
+4. **NSCC** - Do not indicate "RTT-based"; supports both lossless and lossy
+5. **RCCC** - Do not expand to "receiver credit control"
+6. **Collective Accel** - Do not indicate "RISC-V line-rate reduce"; indicate "homogeneous/island only"
+
+### Protocol/Feature Support Notation
+1. **ECN**: Include RoCE as supported alongside UE and Ethernet
+2. **Interoperability Mode**: For Heterogeneous, add "(island)" in parentheses
+
+### Glossary Requirements
+1. All acronyms used in tables MUST be defined in the glossary at the end of the document
+2. Glossary entries should be alphabetically ordered
+3. Format: `**ACRONYM** - Full expansion and brief description`
