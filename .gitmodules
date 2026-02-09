@@ -1,0 +1,6 @@
+[submodule "earlysim"]
+	path = earlysim
+	url = git@github.com:cornelisnetworks/earlysim.git
+[submodule "hlc"]
+	path = hlc
+	url = git@github.com:cornelisnetworks/hlc.git
