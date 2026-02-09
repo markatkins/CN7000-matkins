@@ -23,6 +23,15 @@ pandoc --to docx \
 
 Post-processing: `docx-postprocess.py`
 
+### Heading Level Shift
+
+The `--shift-heading-level-by=-1` flag shifts all headings down one level:
+- H1 in markdown → removed by `docx-format.lua` (becomes document title via `-M title=`)
+- H2 in markdown → H1 in DOCX (top-level sections)
+- H3 in markdown → H2 in DOCX
+
+This ensures the document title comes from metadata (displayed on the template's title page) rather than appearing as a heading in the body.
+
 ## Document Properties
 
 Set by `docx-postprocess.py`:
@@ -91,6 +100,31 @@ Order of elements in final document:
 Handles:
 1. Removes first H1 (moved to metadata)
 2. Assigns table captions with sequential numbering
+
+## ⚠️ Maintenance: Hardcoded Caption List
+
+`docx-format.lua` (lines 4-11) contains a **hardcoded list** of table captions:
+
+```lua
+local table_captions = {
+    "Scale-Out AI Workload Solutions",
+    "Scale-Out HPC Workload Solutions",
+    "Scale-Up AI Workload Solutions",
+    "Scale-Up HPC Workload Solutions",
+    "Feature Applicability by Solution",
+    "Key Differentiators by Solution Type"
+}
+```
+
+**If you add, remove, or reorder tables in `solutions.md`, you MUST update this list.**
+
+The filter assigns captions by position (1st table → 1st caption, 2nd table → 2nd caption, etc.). If the list doesn't match the tables, captions will be silently wrong in DOCX output.
+
+### How to Update
+1. Edit `templates/filters/docx-format.lua`
+2. Update the `table_captions` list to match the tables in `solutions.md` (same order)
+3. Rebuild: `./build.sh docx`
+4. Verify captions in output
 
 ## Post-Processor (docx-postprocess.py)
 

@@ -30,12 +30,18 @@ typst compile temp.typ solutions.pdf
 - Native Unicode support (✓, etc.)
 - Simpler syntax for customization
 
-## Compatibility Filter
+## Compatibility Filter (typst-compat.lua)
 
-The `typst-compat.lua` filter handles pandoc -> typst compatibility:
+The `typst-compat.lua` filter handles pandoc 3.1.3 → Typst compatibility issues:
 
-- `HorizontalRule` → `#line(length: 100%)`
-- `BlockQuote` → styled div (note class)
+| Pandoc Element | Typst Output | Purpose |
+|---------------|-------------|---------|
+| `HorizontalRule` (`---`) | `#line(length: 100%)` | Pandoc doesn't convert `---` to Typst natively |
+| `BlockQuote` (`> text`) | `Div` with "note" class | Preserves blockquote content as styled block |
+
+### BlockQuote Handling
+
+The `solutions.md` file uses blockquotes for important notes (e.g., the Scale-Up NIC disclaimer). Without this filter, pandoc's Typst writer may not render blockquotes correctly. The filter converts them to Div elements with a "note" class, which Typst renders as styled blocks.
 
 ## Page Layout
 

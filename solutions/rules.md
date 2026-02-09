@@ -43,9 +43,9 @@ Rules are organized by output format in the `rules/` directory:
 
 ### PDF Rules (from [pdf.md](rules/pdf.md))
 
-- Primary: xelatex with 1" margins, 11pt font
-- Fallback: LibreOffice conversion from DOCX
-- For branded PDFs, use DOCX → PDF
+- Two-step: pandoc → Typst source → `typst compile` → PDF
+- Typst compatibility filter handles HorizontalRule and BlockQuote
+- For branded PDFs, use DOCX → PDF conversion
 
 ---
 
@@ -53,13 +53,24 @@ Rules are organized by output format in the `rules/` directory:
 
 | File | Purpose |
 |------|---------|
+| `solutions.md` | Main content source (markdown) |
+| `build.sh` | Build script (docx, pdf, pptx) |
 | `rules.md` | This index file |
 | `rules/common.md` | Shared rules |
 | `rules/markdown.md` | Source authoring rules |
 | `rules/docx.md` | Word generation rules |
 | `rules/pptx.md` | PowerPoint generation rules |
 | `rules/pdf.md` | PDF generation rules |
-| `templates/filters/pptx-tables.lua` | PPTX Lua filter |
-| `templates/filters/docx-format.lua` | DOCX Lua filter |
-| `templates/filters/docx-postprocess.py` | DOCX post-processor |
-| `build.sh` | Build script |
+| `templates/Standard_Tech Doc Word Template.dotx` | DOCX reference template |
+| `templates/custom-reference.pptx` | PPTX reference template |
+| `templates/custom-reference.pptx.backup-donot-touch` | Original pristine PPTX template (Dec 2025) |
+| `templates/custom-reference-backup.pptx` | Pre-layout-fix PPTX template backup (Feb 2026) |
+| `templates/filters/docx-format.lua` | DOCX Lua filter (H1 removal, caption numbering) |
+| `templates/filters/docx-postprocess.py` | DOCX post-processor (borders, captions, TOT, properties) |
+| `templates/filters/pptx-tables.lua` | PPTX Lua filter (table splitting, column widths, slide titles) |
+| `templates/filters/pptx-postprocess.py` | PPTX post-processor (layout remapping) |
+| `templates/filters/typst-compat.lua` | PDF/Typst compatibility filter |
+| `templates/filters/pptx-slides.lua` | Legacy stub (unused, not in build pipeline) |
+| `templates/filters/pptx-layout-map.lua` | Documentation-only stub (unused, not in build pipeline) |
+| `utilities/todocx.psm1` | Legacy PowerShell DOCX script (Windows, unused) |
+| `utilities/topptx.psm1` | Legacy PowerShell PPTX script (Windows, unused) |

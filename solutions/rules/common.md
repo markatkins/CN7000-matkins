@@ -23,6 +23,13 @@ These rules apply to all output formats (Markdown, DOCX, PPTX, PDF).
 
 - Megafly and Dragonfly are NOT supported for AI workloads (HPC only)
 
+## Scale-Up Design Constraints
+
+- **Cornelis does not currently have a scale-up NIC or embedded accelerator HFI**
+- Scale-Up solutions assume third-party endpoint vendors connecting to Cornelis switches
+- Scale-Up interoperability is **Homogeneous only** (no heterogeneous/island mode)
+- This constraint applies to both Scale-Up AI (UALink) and Scale-Up HPC (UE/ULN)
+
 ## Feature Naming Conventions
 
 | Feature | Correct Usage | Do NOT Use |
@@ -51,3 +58,16 @@ All documents must include definitions for:
 - bidi, CBFC, CMS, CSIG/CSIG+, ECAR, ECN, FGAR, LLR, NSCC, OPA
 - PDS, RCCC, RMA, ROD, RoCE, RUD, RUDI, SDR, SES, UALink
 - UE, UE+, ULN, UUD
+
+## Toolchain Requirements
+
+| Tool | Tested Version | Known Issues |
+|------|---------------|--------------|
+| Pandoc | 3.1.3 | `pandoc.Caption()` API unavailable; `--pdf-engine=typst` broken (use two-step process) |
+| Typst | 0.14.2 | None known |
+| Python | 3.x | Required for `docx-postprocess.py` and `pptx-postprocess.py` |
+
+### Pandoc 3.1.3 Limitations
+- `pandoc.Caption()` constructor does not exist — Lua filters must use table-based caption format: `{long = {...}, short = nil}`
+- `--pdf-engine=typst` fails — must use two-step process: `pandoc → .typ` then `typst compile`
+- PPTX layout selection is not exposed to Lua filters — layout remapping requires Python post-processing
