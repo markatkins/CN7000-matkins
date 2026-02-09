@@ -194,6 +194,71 @@
 
 ---
 
+
+### W-21: Collective Acceleration Packet Format Definitions
+
+| Field | Value |
+|-------|-------|
+| **Status** | Open |
+| **Priority** | High |
+| **Category** | Datamodel |
+| **Created** | 2026-02-09 |
+| **Estimated Effort** | 8-12 hours |
+
+**Description**: Define comprehensive packet format KSY files for collective acceleration operations. The current datamodel has a single `collective_l2.ksy` header (4 bytes) but lacks the full set of packet formats needed for hardware-accelerated collectives via the Collectives Engine (CE).
+
+**Current Coverage**:
+- ✅ `cornelis/network/collective_l2.ksy` - 4-byte collective L2 header (op, flags, group_id, sequence, dtype, count)
+- ✅ `hw/ip/cornelis/ce/descriptors.ksy` - CE command/completion descriptors (host-side, opcodes 0x20-0x2C)
+- ✅ `hw/ip/cornelis/ce/fsms/ce_scheduler_fsm.ksy` - CE firmware dispatch model
+- ✅ `ue/network/ufh_32.ksy` - UFH-32 collective/multicast/barrier/reduction type enums
+- ✅ `ue/network/ufh_16.ksy` - UFH-16 collective type enum
+- ✅ `cornelis/network/ufh_16_plus.ksy`, `ufh_32_plus.ksy` - Cornelis UFH extensions with collective types
+
+**Gaps to Address**:
+- [ ] Collective data packet format (payload carrying reduction operands)
+- [ ] Collective control packet format (tree setup, group management, completion signals)
+- [ ] Collective ACK/NACK format (reliability for collective operations)
+- [ ] Reduction operation header extensions (reduction operator enum: SUM, MIN, MAX, AND, OR, XOR, etc.)
+- [ ] Tree topology descriptor (parent/child relationships, fan-in/fan-out)
+- [ ] Ring topology descriptor (predecessor/successor, ring direction)
+- [ ] Collective completion/notification packet format
+- [ ] Barrier synchronization packet format (arrival, release phases)
+- [ ] Multi-phase collective sequence definitions (e.g., allreduce = reduce + broadcast)
+- [ ] CE-to-network interface packet format (how CE cores inject/receive collective packets)
+- [ ] Integration with `collective_l2.ksy` — extend or create companion formats
+
+**Relationship to Existing Work**:
+- `collective_l2.ksy` defines the L2 header but not the full packet stack
+- CE descriptors (`hw/ip/cornelis/ce/descriptors.ksy`) define host→CE commands, not CE→network packets
+- UFH headers reference collective types but don't define the collective payload formats
+- CE firmware dispatch model shows reduce_handler and command_handler states but packet formats for these are undefined
+
+**Deliverables**:
+- [ ] `cornelis/network/collective_data.ksy` - Collective data packet (reduction operands)
+- [ ] `cornelis/network/collective_control.ksy` - Collective control packet (setup, teardown, completion)
+- [ ] `cornelis/network/collective_ack.ksy` - Collective reliability (ACK/NACK)
+- [ ] `cornelis/network/collective_barrier.ksy` - Barrier synchronization packets
+- [ ] `cornelis/network/collective_topology.ksy` - Tree/ring topology descriptors
+- [ ] `cornelis/network/collective_sequences/` - Multi-phase collective sequence definitions
+- [ ] Update `collective_l2.ksy` with cross-references to new formats
+- [ ] Update `ufh_32_plus.ksy` and `ufh_16_plus.ksy` with collective next-header references
+- [ ] Documentation in `packet_taxonomy_ue_plus_variants.md` Section on collective packet flows
+
+**References**:
+- `datamodel/protocols/cornelis/network/collective_l2.ksy` - Existing collective L2 header
+- `datamodel/hw/ip/cornelis/ce/descriptors.ksy` - CE command descriptors
+- `datamodel/hw/ip/cornelis/ce/fsms/ce_scheduler_fsm.ksy` - CE firmware dispatch model
+- CN7000 Packet Taxonomy (internal)
+- MPI Standard (collective operation semantics)
+- NCCL/RCCL (GPU collective patterns for reference)
+
+**Dependencies**:
+- W-19 (UFH rules — collective packets use UFH headers)
+- CE architecture documents (`earlysim/docs/ce/`)
+
+---
+
 ## 2. Deferred Work Items
 
 ### W-15: UE+ to CN7000 Packet Taxonomy.ppt Comparison Table
