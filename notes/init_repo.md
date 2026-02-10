@@ -1,4 +1,12 @@
 # Overview
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Procedure](#procedure)
+  - [Hints](#hints)
+- [Theory](#theory)
+
 This repo started out not as a repo. To improve workflow and protect the work, it was decided to make it as a repo with appropriate submodules included. See [README.md](../README.md) for more details.
 See [workflows.md](../workflows.md) for more info on the intended use of the workflows.
 
