@@ -2,6 +2,15 @@
 
 Top-level workspace for the Cornelis Networks CN7000 high-performance networking platform.
 
+## Table of Contents
+
+- [Product Overview](#product-overview)
+- [Repository Structure](#repository-structure)
+- [Submodules](#submodules)
+- [Key Technologies](#key-technologies)
+- [Getting Started](#getting-started)
+- [License](#license)
+
 ## Product Overview
 
 CN7000 is Cornelis Networks' next-generation networking platform targeting HPC and AI
