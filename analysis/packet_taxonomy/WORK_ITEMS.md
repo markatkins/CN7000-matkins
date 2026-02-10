@@ -253,9 +253,79 @@
 - MPI Standard (collective operation semantics)
 - NCCL/RCCL (GPU collective patterns for reference)
 
+**Sub-Items**:
+
+#### W-21-001: HAS vs Datamodel Collective Review and Alignment Plan
+
+| Field | Value |
+|-------|-------|
+| **Status** | Open |
+| **Priority** | High |
+| **Category** | Review / Alignment |
+| **Estimated Effort** | 4-6 hours |
+
+**Description**: Review all HAS references to collective operations against the datamodel, determine which source is correct where they diverge, and produce an alignment plan for updates.
+
+**Scope**: The HAS references collectives across multiple chapters but Chapter 16 (Collectives Engine) is **missing** (tracked as W-16-CE-001 in `earlysim/docs/HAS/PMR/WORK.md`). Meanwhile, the datamodel has `collective_l2.ksy` and CE descriptors that may not match what the HAS prose describes. This sub-item reconciles the two.
+
+**HAS Chapters Referencing Collectives** (all must be reviewed):
+
+| Chapter | Section | Content | Key Claims to Verify |
+|---------|---------|---------|---------------------|
+| Ch 2 (Overview) | §2 Collective Protocol | Protocol overview | In-network reduction, tree-based aggregation, VLEN=1024 |
+| Ch 3 (Architecture) | §3 CE block | CE parameters, data path | 4 cores, AX45MPV, 128KB ILM+DLM, S2V/V2S streaming |
+| Ch 4 (Addressing) | §4 Multicast/Collective | Tree addressing | Multicast LID range 0xC00000-0xFFFFFE, parent/child/root |
+| Ch 5 (Packet Formats) | §5 Collective L2 Header | Header format | Points to `datamodel/cornelis/network/collective_l2.ksy` (path wrong — missing `protocols/`) |
+| Ch 6 (Programming) | §6 Collective Operations | Programming model | CE firmware, allreduce/reduce/broadcast/barrier |
+| Ch 8 (HDM) | §8 CE Interface | HDM port for CE | 1 CE port, 32 GB/s, descriptor fetch + operand DMA |
+| Ch 15 (CTU) | §15 Small-Data Collectives | CTU vs CE tradeoff | CE ~500ns latency, CTU for <256B, CE for >1KB |
+| Ch 16 (TX Path) | §16 CE TX Path | CE egress | Dedicated VL (VL5), CE priority, ~1.6 GHz |
+| Ch 17 (RX Path) | §17 CE RX Path | CE ingress, steering | Opcode 0x20-0x2C, CE queue, PTAG variant TBD |
+| Ch 24 (Errors) | §24 CE Errors | Error codes 0x0400-0x04FF | CE freeze mode, firmware exceptions |
+
+**Datamodel Files to Review Against HAS**:
+
+| File | What to Check |
+|------|---------------|
+| `protocols/cornelis/network/collective_l2.ksy` | Does 4-byte header match HAS Ch 5 description? Are op/flags/group_id/sequence/dtype/count fields documented in HAS? |
+| `hw/ip/cornelis/ce/descriptors.ksy` | Do CE opcodes 0x20-0x2C match HAS Ch 17 steering range? Are all descriptor fields documented? |
+| `hw/ip/cornelis/ce/fsms/ce_scheduler_fsm.ksy` | Does firmware dispatch model match HAS Ch 3 CE description? |
+| `protocols/ue/network/ufh_32.ksy` | Do UFH collective/multicast/barrier/reduction enums match HAS? |
+| `protocols/cornelis/network/ufh_16_plus.ksy`, `ufh_32_plus.ksy` | Do Cornelis UFH collective types match HAS? |
+| `hw/ip/cornelis/ce/views/*.puml` | Do CE behavioral diagrams match HAS Ch 3 architecture? |
+
+**Authority Resolution** (per AGENTS.md hierarchy):
+- **Datamodel is authoritative** for packet formats, descriptor layouts, and field definitions
+- **HAS is authoritative** for architectural intent, programming model, and system-level behavior
+- **Where they conflict**: Determine which reflects the intended design, update the other
+- **Where both are incomplete**: Flag as gap requiring CE architecture team input
+
+**Deliverables**:
+- [ ] Comparison table: HAS claim → Datamodel state → Match/Mismatch/Gap
+- [ ] List of HAS corrections needed (wrong paths, stale claims, missing details)
+- [ ] List of datamodel gaps (formats described in HAS but not in datamodel)
+- [ ] List of items requiring CE architecture team input (neither source definitive)
+- [ ] Alignment plan with prioritized updates (which to fix first)
+- [ ] Cross-reference to existing work items (W-16-CE-001 in HAS WORK.md, W-05-* in has-datamodel-comparison.md)
+
+**Known Issues Already Identified**:
+- HAS Ch 5 references `datamodel/cornelis/network/collective_l2.ksy` — path is wrong (missing `protocols/` prefix), tracked as systemic issue in `has-datamodel-comparison.md`
+- HAS Ch 16 (Collectives Engine) is entirely missing (W-16-CE-001)
+- CE PTAG variant format is TBD (noted in Ch 17 RX path)
+- Collective tree addressing details deferred (W-04-001 in HAS WORK.md)
+- HAS Ch 3 says AX45MPV but CE descriptors.ksy says AX46MPV — need to determine which is correct
+
 **Dependencies**:
 - W-19 (UFH rules — collective packets use UFH headers)
-- CE architecture documents (`earlysim/docs/ce/`)
+- CE architecture documents (`earlysim/docs/HAS/CE/`)
+- `earlysim/datamodel/protocols/working/reviews/has-datamodel-comparison.md` (existing HAS vs datamodel review)
+
+---
+
+**Dependencies**:
+- W-19 (UFH rules — collective packets use UFH headers)
+- W-21-001 (HAS review — determines what's correct before building new formats)
+- CE architecture documents (`earlysim/docs/HAS/CE/`)
 
 ---
 
