@@ -21,6 +21,7 @@ mkdir -p worktrees
 # Create worktrees (one per workflow)
 git worktree add worktrees/main main
 git worktree add -b packet-taxonomy worktrees/packet-taxonomy main
+  * git branch --set-upstream-to=origin/main packet-taxonomy
 git worktree add -b requirements worktrees/requirements main
 git worktree add -b solutions worktrees/solutions main
 git worktree add -b doc-reviews worktrees/doc-reviews main
