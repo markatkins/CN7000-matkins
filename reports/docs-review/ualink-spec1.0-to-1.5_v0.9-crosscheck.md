@@ -1,419 +1,459 @@
-# Crosscheck Review Report: UALink200 Spec v1.0 Final vs. UALink Common Spec Draft Rev 1.5 v0.9
+# Full Crosscheck Review Report: UALink200 v1.0 Final vs. UALink v1.5 (Common + DLPL 200G)
 
 ## Document Information
 
 | Field | Value |
 |-------|-------|
-| **Artifact 1** | `docs/references/UALink/UALink200_Specification_v1.0_Final` — UALink_200 Rev 1.0, dated 4/1/2025 (5,974 lines) |
-| **Artifact 2** | `docs/references/UALink/UALink_Common_Specification_Draft_Rev1.5_v0.9` — UALink Common Specification Draft Rev 1.5_v0.9, dated 1/13/2026 (5,186 lines) |
-| **Review Date** | 2026-02-10 |
+| **Artifact 1** | `UALink200_Specification_v1.0_Final` — UALink_200 Rev 1.0, dated 4/1/2025 (5,974 lines, single document) |
+| **Artifact 2a** | `UALink_Common_Specification_Draft_Rev1.5_v0.9` — UALink Common Spec Draft Rev 1.5 v0.9, dated 1/13/2026 (5,186 lines) |
+| **Artifact 2b** | `UALink_1.5_DLPL_200G_NCB_RC` — UALink 200G Data Link and Physical Layers Version 1.5 (Release Candidate), dated 1/12/2026 (2,807 lines) |
+| **Review Date** | 2026-02-11 |
 | **Reviewer** | Crosscheck Analysis (developer-opus) |
 | **Classification** | UALink Consortium Confidential |
+| **Supersedes** | `ualink-spec1.0-to-1.5_v0.9-crosscheck.md` (Common-only review, 2026-02-10) |
 
 ---
 
 ## 1. Executive Summary
 
-This crosscheck compares the **UALink_200 Rev 1.0** specification (the "v1.0 Final", released April 2025) against the **UALink Common Specification Draft Rev 1.5 v0.9** (the "v1.5 Draft", dated January 2026) to identify all changes, additions, removals, and areas of concern between the two specification revisions.
+This report is the **full crosscheck** of UALink200 v1.0 Final against the complete v1.5 specification suite, which was split into two documents:
+- **UALink Common Specification Draft Rev 1.5 v0.9** — Protocol, Transaction, Collectives, Security, Switch Requirements (Chapters 1-9)
+- **UALink 200G Data Link and Physical Layers Version 1.5 RC** — Data Link and Physical Layer for 200G SerDes (Chapters 2-3 + Appendices)
 
-**Key Finding:** The v1.5 Draft represents a **major structural and functional evolution** of the UALink specification. The most significant changes are:
+The v1.0 specification was a single monolithic document. For v1.5, the UALink Consortium split it into a speed-independent "Common" specification and speed-specific "DLPL" specifications. This review covers both halves to provide complete coverage.
 
-1. **In-Network Collectives (INC)** — An entirely new Chapter 6 adds comprehensive INC support including Collective Primitives (ReadReduce, WriteMulticast, WriteFullMulticast, AtomicNRMulticast) and Block Collectives (BlockCollectiveAllocate, BlockCollectiveDeallocate, BlockCollectiveInvoke, BlockRead, BlockWriteFull).
-2. **DL/PL Separation** — The Data Link Layer (Chapter 6 in v1.0) and Physical Layer (Chapter 7 in v1.0) have been **removed** from the Common specification and moved to separate companion specifications.
-3. **Security Enhancements for Collectives** — New Section 8.6 adds security architecture for collective operations including Accelerator-Switch link protection, Switch Port Identifiers, and collective traffic detection.
-4. **New UPLI Commands** — 10+ new command encodings added to support INC operations.
-5. **Chapter Renumbering** — Security moves from Chapter 9 to Chapter 8; Switch Requirements moves from Chapter 10 to Chapter 9; Manageability moves from Chapter 8 to Chapter 7.
+### Key Findings
 
-### Change Statistics
+**Common Spec Changes (from prior review — confirmed):**
+1. **In-Network Collectives (INC)** — Entirely new Chapter 6 with Collective Primitives and Block Collectives (10 new UPLI commands)
+2. **Security for Collectives** — New Section 8.6 with Accelerator-Switch link protection
+3. **Multi-path routing security** — New Section 8.7
+4. **PCRC (Payload CRC)** — New Section 8.5.15
 
-| Change Category | Count | Impact |
-|----------------|-------|--------|
-| **NEW** — Entirely new content | 14 | INC chapter, new commands, new switch structures, collective security |
-| **MODIFIED** — Existing content changed | 18 | Command table, signal tables, TL compressed responses, security sections |
-| **REMOVED** — Content removed from this spec | 2 | DL chapter, PL chapter (moved to separate specs) |
-| **UNCHANGED** — Substantively identical | 12 | Core UPLI, addressing, coherency, topology, TL flit format basics |
-| **TBD/INCOMPLETE** — Marked as incomplete | 3 | Reproducibility (6.5), Rounding Modes (6.6), some Block Collective details |
+**DLPL Spec Changes (NEW in this review):**
+5. **Link Resiliency** — New Section 2.8 adds bonding of two physical layers to one DL with TDM, fault recovery, and reordering
+6. **Link Folding** — New Section 2.9 adds power-saving lane folding/unfolding with DL PwrDn state
+7. **Link Width Negotiation** — New DL control message (Section 2.4.3.3) for negotiating link width changes
+8. **Tx Ready Notification** — New DL basic message (Section 2.4.2.6) for link unfolding coordination
+9. **TL Backpressure** — New Rx Ingress Rules for handling TL backpressure (Section 2.6.6.2)
+10. **DL-PL Interface** — New Appendix B with detailed signal-level interface specification
+11. **Rapid Alignment Markers (RAMs)** — New Section 3.3.7 for fast alignment during link unfolding
+12. **PMA Symbol Pair Demultiplexing** — New Section 3.3.8 requiring parallel alignment search
 
----
+### Overall Assessment
 
-## 2. Structural Changes
-
-### 2.1 Chapter Organization
-
-| v1.0 Final Chapter | v1.5 Draft Chapter | Status |
-|--------------------|---------------------|--------|
-| 1 - Introduction | 1 - Introduction | UNCHANGED |
-| 2 - UPLI Interface Definition | 2 - UPLI Interface Definition | MODIFIED (new commands, signals) |
-| 3 - RAS | 3 - RAS | UNCHANGED (page refs shifted) |
-| 4 - UPLI Interface Reset | 4 - UPLI Interface Reset | MODIFIED (minor) |
-| 5 - Transaction Layer (TL) | 5 - Transaction Layer (TL) | MODIFIED (new compressed response types) |
-| 6 - Data Link | *REMOVED* — moved to separate spec | **MAJOR REMOVAL** |
-| 7 - Physical Layer | *REMOVED* — moved to separate spec | **MAJOR REMOVAL** |
-| 8 - Manageability Requirements | 7 - Manageability Requirements | UNCHANGED |
-| 9 - Security | 8 - Security | MODIFIED (new Section 8.6 for collectives) |
-| 10 - UALink Switch Requirements | 9 - UALink Switch Requirements | MODIFIED (INC-related additions) |
-| *(none)* | 6 - UALink In-Network Collectives | **ENTIRELY NEW** |
-
-**Finding F-2.1.1 (OBSERVATION):** The revision history (line 446-449) explicitly states: "Moves DL/PL content out to separate specifications. Add support for In-Network-Collectives (INC)." This is the defining change of the v1.5 Draft.
-
-**Finding F-2.1.2 (RISK — MEDIUM):** The removal of DL and PL chapters means the v1.5 Common spec is **not self-contained** for implementation. Implementors must now reference at least three documents: the Common spec, the DL spec, and the PL spec. The companion DL and PL specifications were not provided for this review. **Their availability and version alignment should be confirmed.**
+| Dimension | v1.0 | v1.5 (Common + DLPL) | Delta |
+|-----------|------|----------------------|-------|
+| Total Lines | 5,974 | 7,993 (5,186 + 2,807) | +34% |
+| Chapters | 10 | 9 (Common) + 3 (DLPL) + Appendices | Restructured |
+| UPLI Commands | 12 | 22 | +10 new |
+| DL States | 4 (Fault, Idle, NOP, Up) | 5 (+ PwrDn) | +1 new |
+| DL Message Types | 7 | 9 | +2 new |
+| PL Features | Basic RS/PCS/FEC | + Link Resiliency, Folding, RAMs | Major additions |
 
 ---
 
-## 3. Detailed Cross-Reference Analysis
+## 2. Specification Structure: v1.0 (Monolithic) vs. v1.5 (Split)
 
-### 3.1 Document Metadata and Scope
+### 2.1 Document Mapping
 
-| Parameter | v1.0 Final | v1.5 Draft | Status |
-|-----------|-----------|------------|--------|
-| Title | "UALink_200 Rev 1.0" | "UALink Common Specification Draft Rev 1.5_v0.9" | **CHANGED** — renamed from "200" to "Common" |
-| Copyright | (c) 2025 | (c) 2025-2026 | Updated |
-| Release Date | 4/1/2025 | 1/13/2026 | 9 months later |
-| Status | Final (1.0) | Draft (v0.9) | **v1.5 is still draft** |
-| INC Support | "does not define or enable how to perform in-network, in-memory, or near-memory compute" (line 509) | INC fully specified in Chapter 6 | **MAJOR CHANGE** |
-| DL/PL | Chapters 6-7 included | Removed to separate specs | **MAJOR CHANGE** |
-| Total Lines | 5,974 | 5,186 | 13% smaller despite new INC chapter |
+| v1.0 Chapter | v1.5 Document | v1.5 Chapter | Status |
+|-------------|---------------|-------------|--------|
+| 1 - Introduction | Common | 1 - Introduction | UNCHANGED |
+| 2 - UPLI Interface | Common | 2 - UPLI Interface | MODIFIED (INC commands) |
+| 3 - RAS | Common | 3 - RAS | UNCHANGED |
+| 4 - UPLI Reset | Common | 4 - UPLI Reset | MINOR CHANGES |
+| 5 - Transaction Layer | Common | 5 - Transaction Layer | MODIFIED (INC compressed responses) |
+| 6 - Data Link | **DLPL** | **2 - Data Link** | **MAJOR ADDITIONS** |
+| 7 - Physical Layer | **DLPL** | **3 - Physical Layer** | **MAJOR ADDITIONS** |
+| 8 - Manageability | Common | 7 - Manageability | RENUMBERED |
+| 9 - Security | Common | 8 - Security | MODIFIED (collective security) |
+| 10 - Switch Requirements | Common | 9 - Switch Requirements | RENUMBERED |
+| *(none)* | Common | **6 - In-Network Collectives** | **ENTIRELY NEW** |
+| *(none)* | **DLPL** | **Appendix A - DL CRC Example** | **NEW** |
+| *(none)* | **DLPL** | **Appendix B - DL to PL Interface** | **NEW** |
 
-**Finding F-3.1.1 (CRITICAL OBSERVATION):** The v1.0 Final explicitly states (line 509): *"This version of the specification does not define or enable attaching devices to the Switches. It does not define or enable how to perform in-network, in-memory, or near-memory compute."* The v1.5 Draft **removes this limitation** and adds comprehensive INC support. This is the single most significant functional change between the two versions.
+### 2.2 DLPL Revision History
 
-**Finding F-3.1.2 (OBSERVATION):** The naming change from "UALink_200" to "UALink Common Specification" suggests a restructuring of the specification suite. The "200" designation referred to the 200G SerDes speed; the "Common" designation suggests this spec now covers protocol-layer content common across multiple speed grades, with speed-specific DL/PL content in separate documents.
+The DLPL spec's revision history (lines 260-269) documents the following additions beyond v1.0:
 
----
-
-### 3.2 UPLI Interface (Chapter 2) — Commands
-
-| Command | v1.0 Encoding | v1.5 Encoding | Status |
-|---------|--------------|---------------|--------|
-| Read | 00_0011b/03h | 00_0011b/03h | UNCHANGED |
-| **ReadReduce** | *(not present)* | 00_0100b/04h | **NEW** — Collective Primitive |
-| **BlockRead** | *(not present)* | 00_0101b/05h | **NEW** — Block Collective |
-| Write | 10_1000b/28h | 10_1000b/28h | UNCHANGED |
-| WriteFull | 10_1001b/29h | 10_1001b/29h | UNCHANGED |
-| UPLI Write Message | 10_1010b/2Ah | 10_1010b/2Ah | UNCHANGED |
-| **BlockCollectiveInvoke** | *(not present)* | 10_0000b/20h | **NEW** — Block Collective |
-| **BlockCollectiveAllocate** | *(not present)* | 10_0001b/21h | **NEW** — Block Collective |
-| **BlockCollectiveDeallocate** | *(not present)* | 10_0010b/22h | **NEW** — Block Collective |
-| **BlockWriteFull** | *(not present)* | 10_0011b/23h | **NEW** — Block Collective |
-| **WriteMulticast** | *(not present)* | 10_0110b/26h | **NEW** — Collective Primitive |
-| **WriteFullMulticast** | *(not present)* | 10_0111b/27h | **NEW** — Collective Primitive |
-| AtomicR | 11_0000b/30h | 11_0000b/30h | UNCHANGED |
-| AtomicNR | 11_0010b/32h | 11_0010b/32h | UNCHANGED |
-| **AtomicNRMulticast** | *(not present)* | 11_0011b/33h | **NEW** — Collective Primitive |
-
-**Finding F-3.2.1 (CHANGE — HIGH IMPACT):** The v1.5 Draft adds **10 new command encodings** to the ReqCmd field. These commands fall into two categories:
-- **Collective Primitives** (4 commands): ReadReduce, WriteMulticast, WriteFullMulticast, AtomicNRMulticast — issued by Accelerators and replicated by the Switch
-- **Block Collective Management** (3 commands): BlockCollectiveInvoke, BlockCollectiveAllocate, BlockCollectiveDeallocate — issued by Accelerators to manage Switch-side collective queues
-- **Block Collective Data** (2 commands): BlockRead, BlockWriteFull — issued by the Switch to perform memory operations on behalf of Block Collectives
-
-**Finding F-3.2.2 (OBSERVATION):** All new command encodings use previously reserved encoding space. No existing command encodings have been changed. This ensures backward compatibility at the encoding level.
-
-**Finding F-3.2.3 (OBSERVATION):** The v1.5 Draft adds new ReqAttr usage tables: Table 2-4 "BlockRead, ReqAttr Usage" and Table 2-5 "ReadReduce, ReqAttr Usage" (lines 1181+). The ReadReduce ReqAttr carries an 8-bit Stochastic Seed value for stochastic rounding modes.
+| ECN/ECR | Date | Description |
+|---------|------|-------------|
+| ECN DL Down Delay | 2025-09-17 | Programmable delay before DL Up -> DL Fault transition |
+| ECR Link Resiliency | 2025-11-04 | Bonding two PLs to one DL |
+| ECR Link Folding | 2025-11-04 | Power-saving lane folding |
+| ECR Back Pressure from TL | 2025-09-30 | TL backpressure handling in DL Rx |
+| ECR DL PL Interface | 2025-10-20 | Signal-level DL-PL interface spec |
+| ECR CRC Example | 2025-09-22 | Informative CRC calculation example |
+| Errata Batch 1 | — | 8 errata resolved (A103001-B103009) |
+| Errata Batch 2 | — | 23 errata resolved (A103010-A103034) |
 
 ---
 
-### 3.3 UPLI Interface — Signal Changes
+## 3. Data Link Layer Changes (DLPL Chapter 2 vs. v1.0 Chapter 6)
 
-| Signal | v1.0 Final | v1.5 Draft | Status |
-|--------|-----------|------------|--------|
-| ReqSrcPhysAccID[9:0] | Source Accelerator ID | Overloaded for ReadReduce: bits [6:0] = ReduceOpDataType, bits [9:7] = RoundingMode | **MODIFIED** for Collective Primitives |
-| ReqDstPhysAccID[9:0] | Destination Accelerator ID | Overloaded for Collective Primitives: contains GroupID[9:0] | **MODIFIED** for Collective Primitives |
-| RdRspTypeInfo[1:0] | *(not present or not documented)* | Indicates type of response (normal vs collective) | **NEW** |
-| WrRspTypeInfo[1:0] | *(not present or not documented)* | Indicates type of response (normal vs collective) | **NEW** |
+### 3.1 Core DL Parameters — Unchanged
 
-**Finding F-3.3.1 (CHANGE — HIGH IMPACT):** The ReqSrcPhysAccID and ReqDstPhysAccID fields are **overloaded** for Collective Primitive commands. For ReadReduce, the ReqSrcPhysAccID carries reduction operation parameters instead of the source accelerator ID. For all Collective Primitives, the ReqDstPhysAccID carries a GroupID instead of a destination accelerator ID. The Switch must restore the proper AccID values when replicating requests. **This overloading adds complexity to switch implementations and must be carefully handled to avoid routing errors.**
-
----
-
-### 3.4 Transaction Layer (Chapter 5)
-
-| Parameter | v1.0 Final | v1.5 Draft | Status |
-|-----------|-----------|------------|--------|
+| Parameter | v1.0 | v1.5 DLPL | Status |
+|-----------|------|-----------|--------|
+| DL Flit Size | 640 bytes | 640 bytes | UNCHANGED |
+| Segments per Flit | 5 | 5 | UNCHANGED |
 | TL Flit Size | 64 bytes | 64 bytes | UNCHANGED |
-| TL Half-Flit | 32 bytes | 32 bytes | UNCHANGED |
-| Control Half-Flit types | Request, Response, FC/NOP, Message | Same + new compressed types for Block* and Multicast* | MODIFIED |
-| Compressed Response types | Tables 5-34 through 5-37 | Tables 5-34 through 5-39 (expanded) | **MODIFIED** |
+| Max TL Flits per DL Flit | ~9.8 (628B payload / 64B) | Same | UNCHANGED |
+| CRC | 32-bit, IEEE 802.3 polynomial | 32-bit, IEEE 802.3 polynomial | UNCHANGED |
+| CRC bit order | Reversed from 802.3 FCS (x0 first) | Reversed from 802.3 FCS (x0 first) | UNCHANGED |
+| Flit Header | 3 bytes (24 bits) | 3 bytes (24 bits) | UNCHANGED |
+| Segment Headers | 5 x 1 byte | 5 x 1 byte | UNCHANGED |
+| DL overhead per Flit | 12 bytes (3 FH + 5 SH + 4 CRC) | 12 bytes | UNCHANGED |
+| Effective TL payload | 628 bytes per 640B Flit | 628 bytes | UNCHANGED |
+| Sequence Number | 9-bit (1-511, 0 reserved) | 9-bit (1-511, 0 reserved) | UNCHANGED |
+| Max unacknowledged Flits | 255 | 255 | UNCHANGED |
+| Replay Request copies | 3 | 3 | UNCHANGED |
 
-**Finding F-3.4.1 (CHANGE — MEDIUM IMPACT):** The v1.5 Draft adds new Compressed Response Field types:
-- Table 5-34: Now includes "Compressed Response for Single Beat Read, AtomicR, **and ReadReduce** Field Signals"
-- **Table 5-35 (NEW)**: "Compressed Response for Single Beat **BlockRead** Field Signals"
-- Table 5-37: Now includes "Compressed Response for a Write, WriteFull, AtomicNR, **WriteMulticast, WriteFullMulticast, AtomicNRMulticast**, or for a Multi-Beat Read, AtomicR, **or ReadReduce** Request Field Signals"
-- **Table 5-38 (NEW)**: "Compressed Response for a **BlockWrite, BlockWriteFull, or Multi-Beat BlockRead** Field Signals"
+### 3.2 DL Link States — NEW: DL PwrDn
 
-These additions expand the TL compressed response encoding to handle the new INC command types. Switch TL implementations must be updated to pack/unpack these new compressed response formats.
+| State | v1.0 | v1.5 DLPL | Status |
+|-------|------|-----------|--------|
+| DL Fault | Yes | Yes | UNCHANGED |
+| DL Idle | Yes | Yes | **MODIFIED** — new transitions for Link Resiliency |
+| DL NOP | Yes | Yes | **MODIFIED** — new transitions for Link Resiliency |
+| DL Up | Yes | Yes | **MODIFIED** — programmable delay to DL Fault, PwrDn transitions |
+| **DL PwrDn** | **No** | **Yes** | **NEW** — entered during Link Folding |
 
----
+**Finding F-3.2.1 (CHANGE — HIGH IMPACT):** The new DL PwrDn state (Section 2.7.1.5) is entered when Link Folding powers down a physical layer. In this state, the RS sends PwrDn Control Flits. The PL places Tx and Rx in low power state after 10 PwrDn Control Flits sent and 1 received. Transitions out of PwrDn go to DL Fault (for link width restoration or error conditions).
 
-### 3.5 In-Network Collectives (Chapter 6) — ENTIRELY NEW
+**Finding F-3.2.2 (CHANGE — MEDIUM IMPACT):** DL Up now has a **programmable delay** before transitioning to DL Fault on continuous fault indication: "between 0 and 10ms in 1ms steps, with a default of 5ms" (line 1528). This was not present in v1.0 and allows the system to ride through transient faults without dropping the link.
 
-This is the largest addition in the v1.5 Draft, spanning approximately 550 lines (lines 3102-3642). It defines:
+**Finding F-3.2.3 (CHANGE — MEDIUM IMPACT):** DL Idle now has additional transition conditions for Link Resiliency: it can transition to DL NOP if another DL "sub" state machine is in DL Up and specific conditions are met (first entry since PwrDn exit, successful Link Width Negotiation, or Link Folding Recovery).
 
-#### 3.5.1 Collective Types Defined
+### 3.3 DL Messages — NEW: Link Width Negotiation, Tx Ready Notification
 
-| Collective | Description | Implementation |
-|-----------|-------------|----------------|
-| BROADCAST | Copy data from Root Rank to all Ranks | Collective Primitives (WriteFullMulticast) or Block Collective |
-| REDUCE | Reduce data from all Ranks to Root Rank | Collective Primitives (ReadReduce) or Block Collective |
-| ALL-REDUCE | Reduce + Broadcast to all Ranks | Combination of REDUCE + BROADCAST |
-| REDUCE-SCATTER | Reduce with scattered output | Repeated REDUCE operations |
+| Message | v1.0 | v1.5 DLPL | Status |
+|---------|------|-----------|--------|
+| No-Op | Yes | Yes | UNCHANGED |
+| TL Rate Notification | Yes | Yes | UNCHANGED |
+| Device ID Request | Yes | Yes | UNCHANGED |
+| Port Number Request | Yes | Yes | UNCHANGED |
+| DL Channel On/Offline | Yes | Yes | UNCHANGED |
+| **Link Width Negotiation** | **No** | **Yes** | **NEW** — Section 2.4.3.3 |
+| **Tx Ready Notification** | **No** | **Yes** | **NEW** — Section 2.4.2.6 |
+| UART Stream Transport | Yes | Yes | UNCHANGED |
+| UART Stream Credit Update | Yes | Yes | UNCHANGED |
+| UART Stream Reset Req/Rsp | Yes | Yes | UNCHANGED |
 
-#### 3.5.2 Collective Primitives
+**Finding F-3.3.1 (CHANGE — HIGH IMPACT):** Link Width Negotiation (Table 2-10) is a new Control Message that enables negotiation of link width changes for Link Folding. Key features:
+- Only Accelerators may initiate (not Switches)
+- Supports full width and folded width (PL0 active or PL1 active)
+- Priority bit for urgent thermal/power requests
+- Conflict resolution rules: PL0 wins over PL1; smallest width with Priority wins; widest width without Priority wins
+- Tx Ready Support bit advertises capability
+- Response timeout: 1.0 us; decision pending re-request: 10ms
 
-| Primitive | Base Command | Direction | Switch Action |
-|-----------|-------------|-----------|---------------|
-| ReadReduce | Read | Accel -> Switch -> All Ranks | Replicate read, reduce responses |
-| WriteMulticast | Write | Accel -> Switch -> All Ranks | Replicate write to all group members |
-| WriteFullMulticast | WriteFull | Accel -> Switch -> All Ranks | Replicate write to all group members |
-| AtomicNRMulticast | AtomicNR | Accel -> Switch -> All Ranks | Replicate atomic to all group members |
+**Finding F-3.3.2 (CHANGE — MEDIUM IMPACT):** Tx Ready Notification (Table 2-8) is a new Basic Message sent when a PL transmitter being activated starts transmitting valid symbols during link unfolding. Used as a hint to enable CDR lock on the newly powered receiver.
 
-#### 3.5.3 Block Collectives
+### 3.4 Link Level Replay — MODIFIED
 
-| Operation | Command | Description |
-|-----------|---------|-------------|
-| BlockCollectiveAllocate | 10_0001b | Allocate entries in Switch Control Block Queue |
-| BlockCollectiveDeallocate | 10_0010b | Deallocate entries from Switch Control Block Queue |
-| BlockCollectiveInvoke | 10_0000b | Invoke a Block Collective with 64-byte Control Block |
-| BlockRead | 00_0101b | Switch-issued read for Block Collective data |
-| BlockWriteFull | 10_0011b | Switch-issued write for Block Collective results/status |
+| Parameter | v1.0 | v1.5 DLPL | Status |
+|-----------|------|-----------|--------|
+| Explicit Flit Header format | Table in v1.0 Ch6 | Table 2-16 | UNCHANGED |
+| Command Flit Header format | Table in v1.0 Ch6 | Table 2-17 | UNCHANGED |
+| Rx_replay_limit default | 50 | 50 | UNCHANGED |
+| Tx_ack_time_out | 10.24ms | 10.24ms | UNCHANGED |
+| Replay Request Ignore Window | 12 Flits | 12 Flits | UNCHANGED |
+| **TL Backpressure handling** | **Not specified** | **Section 2.6.6.2** | **NEW** |
+| **Link Width Unfolding replay** | **Not specified** | **Section 2.6.6.11** | **NEW** |
 
-#### 3.5.4 Switch Structures Required for INC
+**Finding F-3.4.1 (CHANGE — MEDIUM IMPACT):** Section 2.6.6.2 adds new Rx Ingress Rules for TL backpressure. When the TL asserts backpressure and there is no room to store the DL Flit, the Flit is discarded and treated similarly to a CRC error (Rx_bad_crc_count incremented, Rx_ambiguous set if count >= 7). This is required for chiplet implementations where TL is on different silicon with UCIe replay. Non-chiplet implementations are "encouraged" to support this.
 
-| Structure | Description | Per-Port |
-|-----------|-------------|----------|
-| Group Table | 1024 entries, each with valid bit + bitmask (width = switch radix) | Yes |
-| Accelerator ID Register | 10-bit register identifying attached Accelerator | Yes |
-| Primitives INC Engine | Replication, tracking, response reduction logic | Yes |
-| Control Block Queue | Implementation-specific depth, up to 64 Submission Queues | Yes |
-| Block Collective Control Logic | Manages queue entries, issues BlockRead/BlockWriteFull | Yes |
+**Finding F-3.4.2 (CHANGE — LOW IMPACT):** Section 2.6.6.11 adds rules for replay during Link Width Unfolding: DL Flits created at folded width must be replayed at proportionately lower rate when operating at unfolded width (e.g., 50% rate via NOP insertion) to prevent receiver overflow.
 
-**Finding F-3.5.1 (CHANGE — CRITICAL IMPACT):** The INC chapter imposes **substantial new hardware requirements on switches**. Every switch port must implement:
-- A 1024-entry Group Table with bitmask width equal to the switch radix
-- Collective Primitive replication and response reduction logic
-- Block Collective Control Block Queues with Submission Queue management
-- The ability to independently issue BlockRead and BlockWriteFull requests as an originator
+### 3.5 Link Resiliency — ENTIRELY NEW (Section 2.8)
 
-This transforms the switch from a pure packet relay into an **active compute participant**. This is the most significant architectural change for switch implementations.
+This is a major new feature not present in v1.0. Link Resiliency bonds two independent physical layers to a single DL.
 
-**Finding F-3.5.2 (RISK — MEDIUM):** The Block Collective Control Block is delivered as a 64-byte payload with the BlockCollectiveInvoke command. The Control Block format (Table 6-6, line 3477) contains parameters for the collective operation. Some parameters are marked with "[TBD: Green stuff above are parameters that can be wrong and should be checked]" (line 3499). **The Control Block format is not yet finalized.**
+| Feature | Description |
+|---------|-------------|
+| **Concept** | Two PLs bonded to one DL; TDM multiplexing in Tx, demultiplexing in Rx |
+| **Applicability** | Optional; defined for links with 2+ lanes |
+| **Tx ordering** | PL[A] first (lower-order lanes), then PL[B], round-robin |
+| **Rx reordering** | Required to handle inter-PL skew; uses AM/RAM for alignment |
+| **Skew budget** | Per IEEE 802.3: 200G serial SP6 = 145ns, at PCS receive = 152ns |
+| **Skew variation** | 4ns (per 802.3) between any PL and any other PL |
+| **Fault handling** | If one PL faults, DL continues on non-faulted PL; LLR replays lost Flits |
+| **Fast recovery** | Faulted PL recovers without DL leaving DL Up (programmable timeout) |
+| **Link down recovery** | Faulted PL goes through DL Fault -> DL Idle -> DL NOP -> DL Up |
+| **DL "sub" state machines** | One per PL; DL is up if any sub-SM is in DL Up |
+| **Tx mux latency** | Max 1/2 Flit time additional |
 
-**Finding F-3.5.3 (RISK — LOW):** Sections 6.5 "Reproducibility" and 6.6 "Rounding Modes and Stochastic Rounding" are both marked "TBD" (lines 3634, 3642). These are important for numerical correctness of reduction operations.
+**Finding F-3.5.1 (CHANGE — CRITICAL IMPACT):** Link Resiliency fundamentally changes the DL architecture from a 1:1 DL-to-PL mapping to a 1:2 mapping. This affects:
+- Replay buffer sizing (must cover RTT for both PLs)
+- Error containment (PL ID mismatch or change triggers error)
+- DL state machine (per-PL "sub" state machines with coordination rules)
+- Flit sequencing (strict incremental monotonic order must be maintained across PLs)
 
----
+### 3.6 Link Folding — ENTIRELY NEW (Section 2.9)
 
-### 3.6 Data Link Layer and Physical Layer — REMOVED
+| Feature | Description |
+|---------|-------------|
+| **Concept** | Power-saving: fold link to half width by powering down one PL's SerDes |
+| **Prerequisite** | Link Resiliency must be supported |
+| **Initiation** | Only Accelerators may request (via Link Width Negotiation message) |
+| **Folding sequence** | Negotiate -> Target enters DL PwrDn -> Initiator enters DL PwrDn -> PMD Tx/Rx low power |
+| **Unfolding sequence** | Negotiate -> Signal PL to power up -> PL restores settings -> DL Fault -> DL Idle -> DL NOP -> DL Up |
+| **Power-up target** | < 250us for Tx/Rx power-up and PL alignment lock |
+| **RAMs during unfold** | Rapid Alignment Markers sent for fast alignment (128x more frequent than AMs) |
+| **Folding recovery** | If active PL faults while folded, powered-down PL is powered up automatically |
 
-| v1.0 Chapter | Content | v1.5 Status |
-|-------------|---------|-------------|
-| 6 - Data Link | DL Flit format (640B), CRC, LLR, UART, pacing, link states | **REMOVED** — moved to separate DL spec |
-| 7 - Physical Layer | RS, PCS/PMA, FEC, 100G/200G/400G/800G rates, LL FEC | **REMOVED** — moved to separate PL spec |
+**Finding F-3.6.1 (CHANGE — HIGH IMPACT):** Link Folding adds a complete power management subsystem to the DL. The < 250us power-up target (line 2137) is aggressive and requires that AN/LT not be re-run during unfold. The PL must save and restore Tx/Rx settings.
 
-**Finding F-3.6.1 (CHANGE — HIGH IMPACT):** The removal of DL and PL chapters reduces the v1.5 Common spec by approximately 1,500 lines of content. However, the DL and PL specifications are **not included in this review**. Key parameters that were in v1.0 and are now in separate specs include:
-- DL Flit size: 640 bytes
-- DL-to-TL Flit mapping: 10 TL Flits per DL Flit
-- CRC protection scheme
-- Link Level Replay (LLR) protocol
-- FEC types: RS-544, RS-272, 1-way/2-way/4-way interleave
-- SerDes rates: 100G, 200G per lane
-- Lane widths: x1, x2, x4
+### 3.7 DL-PL Interface — ENTIRELY NEW (Appendix B)
 
-**These parameters are still normative but must now be referenced from the companion specifications.**
+Appendix B (lines 2656-2807) provides a detailed signal-level interface specification between DL and PL that was not present in v1.0.
 
----
+| Signal Group | Key Signals | Description |
+|-------------|-------------|-------------|
+| **Tx DL->PL** | tx_dp_active, tx_dp_valid, tx_dp_data[511:0], tx_dp_flit_start, tx_dp_command[2:0], tx_dp_uerr, tx_dp_port_id[1:0] | DL drives data and control to PL |
+| **Tx PL->DL** | tx_pd_ready, tx_pd_port_id[1:0], tx_pd_group_start, tx_pd_flit_start | PL flow-controls DL |
+| **Rx PL->DL** | rx_pd_valid, rx_pd_data[511:0], rx_pd_flit_start, rx_pd_port_id[1:0], rx_pd_link_event[3:0], rx_pd_data_err, rx_pd_uerr | PL delivers data and events to DL |
 
-### 3.7 Manageability (Chapter 7 in v1.5 / Chapter 8 in v1.0)
+**Finding F-3.7.1 (CHANGE — HIGH IMPACT):** The DL-PL interface is 512 bits wide (64 bytes) and TDM'd across ports. The TDM calendar changes based on Link Resiliency mode:
+- Without Link Resiliency: 0,1,2,3 (4 ports) or 0,1 (2 ports) or 0 (1 port)
+- With Link Resiliency: 0,2,1,3 (2 DLs) or 0,1 (1 DL) — interleaved for latency optimization
 
-| Parameter | v1.0 Final | v1.5 Draft | Status |
-|-----------|-----------|------------|--------|
-| System Node management | Section 8.1 | Section 7.1 | RENUMBERED, content unchanged |
-| Switch management | Section 8.2 | Section 7.2 | RENUMBERED, content unchanged |
-| Pod Controller | Section 8.3 | Section 7.3 | RENUMBERED, content unchanged |
-| Virtual Pods | Section 8.4 | Section 7.4 | RENUMBERED, content unchanged |
-| Workflows | Section 8.5 | Section 7.5 | RENUMBERED, content unchanged |
-
-**Finding F-3.7.1 (OBSERVATION):** The Manageability chapter is substantively unchanged between v1.0 and v1.5. It has been renumbered from Chapter 8 to Chapter 7 due to the removal of DL/PL chapters and insertion of the INC chapter.
-
----
-
-### 3.8 Security (Chapter 8 in v1.5 / Chapter 9 in v1.0)
-
-| Parameter | v1.0 Final | v1.5 Draft | Status |
-|-----------|-----------|------------|--------|
-| Security model | Section 9.3 | Section 8.3 | RENUMBERED, content unchanged |
-| AES-GCM encryption | Section 9.5 | Section 8.5 | RENUMBERED, content largely unchanged |
-| Switch requirements | Section 9.5.14 | Section 8.5.14 | RENUMBERED, content unchanged |
-| Key Derivation (KDF) | Section 9.5.15 | *(not present as separate section)* | **MOVED** — KDF now in Section 8.5.9.2 |
-| **Collective Security** | *(not present)* | **Section 8.6** | **ENTIRELY NEW** |
-| **Multi-path routing** | *(not present)* | **Section 8.7** | **ENTIRELY NEW** |
-| **Spec version compat** | *(not present)* | **Section 8.8** | **ENTIRELY NEW** |
-| PCRC (Payload CRC) | *(not present)* | Section 8.5.15 (Figures 11-12) | **NEW** — PCRC generation/verification |
-| KDF specification | KMAC256 per SP800-56 | KMAC256 per SP800-56 + detailed context tables | **ENHANCED** |
-
-**Finding F-3.8.1 (CHANGE — HIGH IMPACT):** Section 8.6 "Security during collective operations" (lines 4814-5030) is entirely new and adds:
-- **Switch Port Identifier** (8.6.1): Switch ID + Port Number for identifying switch endpoints in collective security
-- **Accelerator-Switch link protection** (8.6.2): Separate encryption/authentication scheme for the Accelerator-to-Switch link segment during collectives
-- **Ordering Requirements** (8.6.3): Ordering constraints for collective traffic with security enabled
-- **Key States** (8.6.4.1): Key state machine for accelerator-switch link protection keys
-- **Collective traffic detection** (8.6.5): Mechanism for switches to identify collective vs. unicast traffic
-- **Integrity failure handling** (8.6.7): Error handling for security failures on collective traffic
-
-**Finding F-3.8.2 (CHANGE — MEDIUM IMPACT):** Section 8.7 "Allowing multi-path routing with authentication and encryption enabled" (lines 5032-5087) is new and addresses the challenge of maintaining security ordering when traffic may take multiple paths through the network. This includes a new IV format for multi-path routing (Table 29).
-
-**Finding F-3.8.3 (CHANGE — MEDIUM IMPACT):** Section 8.5.15 "Datapath protection" (lines 4790-4812) adds PCRC (Payload CRC) generation and verification during encryption/decryption flows (Figures 11-12). This provides an additional layer of data integrity protection within the security pipeline.
-
-**Finding F-3.8.4 (CHANGE — LOW IMPACT):** Section 8.5.9.2 "Key Derivation Function" (lines 4255-4292) is enhanced with detailed context value tables (Table 7) and IV construction tables (Table 8) that were not present in v1.0.
+**Finding F-3.7.2 (OBSERVATION):** The rx_pd_link_event[3:0] signal provides a rich event vocabulary: NOP, Idle, Remote Fault, PwrDn, AM/RAM with PL ID 0/1/none, Bad Flit, Local Fault. This is the primary mechanism for the DL to track PL state.
 
 ---
 
-### 3.9 Switch Requirements (Chapter 9 in v1.5 / Chapter 10 in v1.0)
+## 4. Physical Layer Changes (DLPL Chapter 3 vs. v1.0 Chapter 7)
 
-| Parameter | v1.0 Final | v1.5 Draft | Status |
-|-----------|-----------|------------|--------|
-| Overview | Section 10.1 | Section 9.1 | RENUMBERED, content identical |
-| Bifurcation | Section 10.2 | Section 9.2 | RENUMBERED, content identical |
-| Lossless delivery | Section 10.3 | Section 9.3 | RENUMBERED, content identical |
-| Non-blocking | Section 10.4 | Section 9.4 | RENUMBERED, content identical |
-| Forward progress | Section 10.5 | Section 9.5 | RENUMBERED, content identical |
-| Ordering & VCs | Section 10.6 | Section 9.6 | RENUMBERED, content identical |
-| Routing Table | Section 10.7 | Section 9.7 | RENUMBERED, content identical |
-| Routing Table Instances | Section 10.7.1 | Section 9.7.1 | RENUMBERED, content identical |
-| Egress port reachability | Section 10.7.2 | Section 9.7.2 | RENUMBERED, content identical |
-| Configuration | Section 10.8 | Section 9.8 | RENUMBERED, content identical |
-| Latency goals | Section 10.9.2 | Section 9.9.2 | RENUMBERED, content identical |
-| Performance goals | Section 10.9.3 | Section 9.9.3 | RENUMBERED, content identical |
+### 4.1 Core PL Parameters — Unchanged
 
-**Finding F-3.9.1 (OBSERVATION):** The Switch Requirements chapter is **substantively identical** between v1.0 and v1.5, with only chapter/section renumbering. Notably, the switch requirements chapter does **not** explicitly reference the new INC requirements from Chapter 6. The INC-related switch requirements (Group Table, Primitives INC Engine, Control Block Queue) are defined within Chapter 6 itself rather than in the Switch Requirements chapter.
+| Parameter | v1.0 | v1.5 DLPL | Status |
+|-----------|------|-----------|--------|
+| 200G SerDes rate | 212.5 Gbps PAM4 | 212.5 Gbps PAM4 | UNCHANGED |
+| 100G SerDes rate | 106.25 Gbps PAM4 | 106.25 Gbps PAM4 | UNCHANGED |
+| Lane configurations | x1, x2, x4 | x1, x2, x4 | UNCHANGED |
+| Station bandwidth | 800 Gbps | 800 Gbps | UNCHANGED |
+| FEC | RS(544, 514) | RS(544, 514) | UNCHANGED |
+| Code word size | 680 bytes (640B DL Flit + 40B FEC/encoding) | 680 bytes | UNCHANGED |
+| DL Flit to codeword | 1:1 mapping | 1:1 mapping | UNCHANGED |
+| 64B/66B encoding | Subset of 802.3 Clause 82 | Same subset | UNCHANGED |
+| AN/LT | Unmodified from 802.3 | Unmodified from 802.3 | UNCHANGED |
 
-**Finding F-3.9.2 (RISK — LOW):** The switch latency goals remain identical: 128-lane <200ns, 256-lane <250ns, 512-lane <300ns. These goals do not account for the additional latency that INC processing (collective primitive replication, response reduction, block collective management) may introduce. **The spec should clarify whether these latency goals apply only to unicast forwarding or also to collective operations.**
+### 4.2 Supported Rates and Clauses — Unchanged
+
+**100G Serial (Table 3-1):**
+
+| Rate | RS | FEC/PCS | PMA | Interleave |
+|------|-----|---------|-----|------------|
+| 100GBASE-KR1/CR1 | 81 | 82, 91 | 135 | 1-way |
+| 200GBASE-KR2/CR2 | 117 | 119 | 120 | 2-way |
+| 400GBASE-KR4/CR4 | 117 | 119 | 120 | 2-way |
+
+**200G Serial (Table 3-2):**
+
+| Rate | RS | PCS | PMA | 802.3 | UALink LL |
+|------|-----|-----|-----|-------|-----------|
+| 200GBASE-KR1/CR1 | 117 | 119 | 176 | 4-way | 2-way, 1-way |
+| 400GBASE-KR2/CR2 | 117 | 119 | 176 | 4-way | 2-way |
+| 800GBASE-KR4/CR4 | 170 | 172 | 176 | 4-way | — |
+
+### 4.3 RS Changes — NEW Features
+
+| Feature | v1.0 | v1.5 DLPL | Status |
+|---------|------|-----------|--------|
+| DL Flit Code Sequences | Data, Idle, Fault, AM | + Idle Start, Fault Start, PwrDn, PwrDn Start | **NEW** |
+| PL ID in Control Flits | Not specified | Last 64B/66B block carries PL ID in D7 | **NEW** |
+| Link Power Down | Not specified | RS sends PwrDn Control Flits; suspends fault signaling | **NEW** |
+| Link Power Up | Not specified | RS sends RAMs; < 250us target; no AN/LT | **NEW** |
+| Rapid Alignment Markers | Not specified | Section 3.3.7 — 128x more frequent than AMs | **NEW** |
+
+**Finding F-4.3.1 (CHANGE — HIGH IMPACT):** The RS now supports 8 types of Flit Code Sequences (up from 4 in v1.0):
+1. Data Flit (unchanged)
+2. Idle Flit (unchanged)
+3. Fault Flit (unchanged)
+4. AM Flit (unchanged)
+5. **Idle Start Flit** (NEW — indicates AM/RAM timing to PCS)
+6. **Fault Start Flit** (NEW — indicates AM/RAM timing during fault)
+7. **PwrDn Flit** (NEW — block type 0xFF, all data 0x00)
+8. **PwrDn Start Flit** (NEW — PwrDn with AM timing indication)
+
+**Finding F-4.3.2 (CHANGE — HIGH IMPACT):** Rapid Alignment Markers (Section 3.3.7) are a significant PCS addition:
+- Use same format as 802.3 Clause 119.2.4.4 AMs
+- UP0 for Lane 0 XOR'd with am_next_count (indicates RAMs until next AM)
+- 128x more frequent than AMs: 32 CW period at 200G x1 (819 ns)
+- Required for Link Folding unfold sequence
+- Alignment lock rules: parallel search for RAM and AM lock, transition from RAM lock to AM lock when two RAMs agree on AM placement
+
+### 4.4 PCS Changes
+
+| Feature | v1.0 | v1.5 DLPL | Status |
+|---------|------|-----------|--------|
+| AM frequency (100G) | Every 4,096 Flits | Every 4,096 Flits | UNCHANGED |
+| AM frequency (200G) | Every 4,096 Flits | Every 4,096 Flits | UNCHANGED |
+| AM frequency (400G) | Every 8,192 Flits | Every 8,192 Flits | UNCHANGED |
+| AM frequency (800G) | Every 16,384 Flits | Every 16,384 Flits | UNCHANGED |
+| Rate matching | Every 1024 CW | Every 1024 CW | UNCHANGED |
+| **PMA Symbol Pair Demux** | **Not specified** | **Section 3.3.8 — parallel search** | **NEW** |
+
+**Finding F-4.4.1 (CHANGE — MEDIUM IMPACT):** Section 3.3.8 requires PMA to consider all 20 possible symbol pair alignments **in parallel** (not serial). This reduces symbol alignment time from ~6ms (serial search) to ~300us (3 AM intervals). This is a new requirement for PMA implementations.
+
+### 4.5 Link Resiliency at PL Level (Section 3.8)
+
+| Feature | Description |
+|---------|-------------|
+| **Transmit Alignment** | PL[A] and PL[B] codewords staggered by 50%; PL[A] first |
+| **AM synchronization** | AMs occur at same time + 50% stagger offset |
+| **PL ID** | PL[A] = 0, PL[B] = 1; transmitted in AM/RAM Control Flits |
+| **PL ID signaling** | RS indicates PL ID to DL when FEC-corrected AM codeword received |
 
 ---
 
-### 3.10 Core Protocol — Unchanged Elements
+## 5. Common Spec Changes (Summary — from prior review)
 
-The following elements are confirmed **unchanged** between v1.0 and v1.5:
+The following changes were identified in the prior Common-only crosscheck and are confirmed here for completeness:
 
-| Element | Value | Confirmed |
-|---------|-------|-----------|
-| Max Accelerators per Pod | 1024 (10-bit AccID) | Yes |
-| Max Lanes per Station | 4 | Yes |
-| Bifurcation modes | x4, x2, x1 | Yes |
-| Max bandwidth per Station | 800 Gbps | Yes |
-| Signaling rate | 212.5 GT/s | Yes |
-| UPLI channels | 4 (Req, RdRsp, WrRsp, OrigData) | Yes |
-| TL Flit size | 64 bytes | Yes |
-| Max Request size | 256 bytes (4 beats) | Yes |
-| 256-byte boundary rule | Requests shall not cross | Yes |
-| Coherency model | I/O coherency, no snoops | Yes |
-| Address translation | Implementation-specific | Yes |
-| Credit-based flow control | Per-channel credits | Yes |
+### 5.1 In-Network Collectives (Chapter 6) — ENTIRELY NEW
 
----
+- **Collective Primitives**: ReadReduce (04h), WriteMulticast (26h), WriteFullMulticast (27h), AtomicNRMulticast (33h)
+- **Block Collective Management**: BlockCollectiveInvoke (20h), BlockCollectiveAllocate (21h), BlockCollectiveDeallocate (22h)
+- **Block Collective Data**: BlockRead (05h), BlockWriteFull (23h)
+- **Switch Structures**: Group Table (1024 entries/port), Primitives INC Engine, Control Block Queue (up to 64 Submission Queues)
+- **TBD Sections**: Reproducibility (6.5), Rounding Modes (6.6), some Control Block parameters
 
-## 4. Contradictions and Inconsistencies
+### 5.2 Security Enhancements (Chapter 8)
 
-### C-1: v1.0 INC Exclusion vs. v1.5 INC Inclusion
-- **v1.0** (line 509): "This version of the specification does not define or enable how to perform in-network, in-memory, or near-memory compute."
-- **v1.5**: Chapter 6 fully defines INC with Collective Primitives and Block Collectives.
-- **Assessment:** Not a contradiction — this is an intentional evolution. The v1.0 statement is version-scoped. However, implementations targeting v1.0 compliance will **not** support INC, and implementations targeting v1.5 **must** support INC. The transition path for existing v1.0 implementations should be documented.
+- **Section 8.6**: Security during collective operations (Switch Port ID, Accel-Switch link protection, key states, collective traffic detection)
+- **Section 8.7**: Multi-path routing with authentication/encryption
+- **Section 8.5.15**: PCRC (Payload CRC) in security pipeline
+- **Section 8.5.9.2**: Enhanced KDF with detailed context/IV tables
 
-### C-2: Switch as Pure Relay vs. Active Compute
-- **v1.0** (Section 10.1 / line 5887): "A UALink Switch shall not be required to decode the contents of these Requests or Responses beyond that necessary to deliver the Requests and Responses, nor shall the Switch track any Request/Response state."
-- **v1.5** (Section 9.1 / line 5099): Contains the **identical statement**.
-- **v1.5** (Chapter 6): Requires switches to implement Group Tables, Primitives INC Engines, Control Block Queues, and issue BlockRead/BlockWriteFull requests.
-- **Assessment:** **CONTRADICTION.** The Switch Requirements chapter (Section 9.1) still states the switch need not decode request contents or track state, but Chapter 6 requires exactly that for INC operations. The Switch Requirements overview should be updated to acknowledge INC requirements. The statement may be intended to apply only to unicast forwarding, but this is not clarified.
+### 5.3 Switch Requirements (Chapter 9)
 
-### C-3: Typo in v1.5 Configuration Section
-- **v1.5** (Section 9.8, line 5167): "For each port, whether or not Authentication is enabled, whichjjjjjjjjjjjjjjjjjj affects TL flit packing and unpacking."
-- **Assessment:** Obvious keyboard artifact ("jjjjjjjjjjjjjjjjjj"). This is a draft quality issue.
+- Substantively identical to v1.0 Chapter 10 (renumbered only)
+- **Contradiction C-2** (from prior review): Section 9.1 still states switches need not decode request contents, but Chapter 6 INC requires exactly that
 
 ---
 
-## 5. TBD / Incomplete Sections in v1.5 Draft
+## 6. Contradictions and Inconsistencies
 
-| Section | Content | Status |
+### C-1: Switch Requirements vs. INC (from prior review — confirmed)
+- **Common Section 9.1**: "A UALink Switch shall not be required to decode the contents of these Requests or Responses beyond that necessary to deliver the Requests and Responses, nor shall the Switch track any Request/Response state."
+- **Common Chapter 6**: Requires switches to implement Group Tables, INC Engines, Control Block Queues, and issue BlockRead/BlockWriteFull.
+- **Assessment:** CONTRADICTION. Must be resolved.
+
+### C-2: Typo in Common Section 9.8 (from prior review — confirmed)
+- Line 5167: "whichjjjjjjjjjjjjjjjjjj affects TL flit packing"
+- **Assessment:** Draft quality issue.
+
+### C-3: DLPL Section 2.7.1.5 Cross-Reference Error
+- Line 1541: "see 6.4.3.3" — This references a section number from the v1.0 monolithic spec. Should be "see 2.4.3.3" in the DLPL document.
+- **Assessment:** Broken cross-reference from spec split.
+
+### C-4: DLPL Section 2.8.1 Numbering Error
+- Line 79: Table of Contents shows "7 Link State and Errors" but the actual section is "2.7 Link State and Errors"
+- Line 84: Table of Contents shows "3 Link Resiliency" but the actual section is "2.8 Link Resiliency"
+- Line 91: Table of Contents shows "9 Link Folding Operation" but the actual section is "2.9 Link Folding Operation"
+- **Assessment:** Table of Contents numbering errors — likely OCR/conversion artifacts.
+
+---
+
+## 7. TBD / Incomplete Sections
+
+### Common Spec TBDs
+
+| Section | Content | Impact |
 |---------|---------|--------|
-| 6.5 Reproducibility | "TBD." | **INCOMPLETE** — Critical for numerical correctness |
-| 6.6 Rounding Modes and Stochastic Rounding | "TBD." | **INCOMPLETE** — Required for ReadReduce operations |
-| 6.3.7 Block Collective Control Block | "[TBD: Green stuff above are parameters that can be wrong and should be checked]" | **INCOMPLETE** — Control Block format not finalized |
-| 6.3.6 Address Masking | "[Figure here showing the entire process?]" | **INCOMPLETE** — Missing figure |
-| 6.3.9 Block Collective Request/Response Flows | "[Add words here for passing through the other signals in the Req Channel?]" | **INCOMPLETE** — Missing text |
+| 6.5 Reproducibility | "TBD." | **HIGH** — numerical correctness |
+| 6.6 Rounding Modes | "TBD." | **HIGH** — ReadReduce semantics |
+| 6.3.7 Block Collective Control Block | "[TBD: parameters that can be wrong]" | **MEDIUM** — format not finalized |
 
-**Finding F-5.1 (RISK — HIGH):** The Reproducibility section (6.5) is critical for AI/ML workloads where deterministic results across runs are required. Without a reproducibility guarantee, different invocations of the same collective operation may produce different results due to floating-point non-associativity. This must be resolved before the spec is finalized.
+### DLPL Spec TBDs
 
-**Finding F-5.2 (RISK — HIGH):** The Rounding Modes section (6.6) is required for the ReadReduce Collective Primitive, which carries a RoundingMode[2:0] field. Without this section, the semantics of the rounding mode values are undefined.
+| Section | Content | Impact |
+|---------|---------|--------|
+| None identified | DLPL appears complete (Release Candidate status) | — |
 
----
-
-## 6. Impact Assessment for LNR Switch Implementation
-
-| v1.5 Change | LNR HAS Rev 0.3 Impact | Effort Estimate |
-|-------------|------------------------|-----------------|
-| New INC commands (10 commands) | Rpipe must parse and route new command types; new command encodings in TL pack/unpack | Medium |
-| Group Table (1024 entries per port) | New per-MPORT structure; bitmask width = switch radix | Medium |
-| Primitives INC Engine | New per-MPORT logic for request replication and response reduction | High |
-| Block Collective Control Block Queue | New per-MPORT queue structure with Submission Queue management | High |
-| Switch-originated BlockRead/BlockWriteFull | Switch must act as request originator, not just relay | High |
-| Collective security (Section 8.6) | Switch Port Identifier, Accel-Switch link protection, collective traffic detection | High |
-| Multi-path routing security (Section 8.7) | New IV format for multi-path routing | Medium |
-| PCRC (Section 8.5.15) | Additional CRC in security pipeline | Low |
-| DL/PL separation | No direct impact on switch core; DL/PL IP unchanged | None |
-
-**Finding F-6.1 (OBSERVATION):** The LNR HAS Rev 0.3 already includes a Collectives Engine (CE) with RISC-V compute blocks, which is architecturally aligned with the v1.5 INC requirements. However, the specific command encodings, Group Table structure, Block Collective Control Block Queue, and response reduction logic defined in v1.5 Chapter 6 must be validated against the LNR CE architecture.
-
-**Finding F-6.2 (OBSERVATION):** The LNR HAS describes collectives as using the Data Ring for multicast and the Collectives Engine for reduction. The v1.5 spec's Collective Primitives (which use the switch to replicate requests and reduce responses) map well to this architecture. The Block Collectives (which require the switch to independently issue reads and writes) may require additional logic in the LNR MPORT to act as a request originator.
+**Finding F-7.1 (OBSERVATION):** The DLPL spec is at **Release Candidate** status (v1.0 RC, dated 2026-01-12), while the Common spec is at **Draft v0.9** status. The DLPL spec appears more mature with no TBD sections identified.
 
 ---
 
-## 7. Risk Summary
+## 8. Impact Assessment for LNR Switch Implementation
+
+### 8.1 DLPL-Specific Impacts
+
+| v1.5 DLPL Change | LNR HAS Rev 0.3 Impact | Effort |
+|-----------------|------------------------|--------|
+| Link Resiliency (2 PLs bonded) | Hill Creek MAC must support TDM mux/demux, per-PL state machines, reordering | **HIGH** |
+| Link Folding (DL PwrDn) | Hill Creek must support PwrDn state, Link Width Negotiation, SerDes power management | **HIGH** |
+| Link Width Negotiation message | New DL control message in Hill Creek DL | **MEDIUM** |
+| Tx Ready Notification message | New DL basic message in Hill Creek DL | **LOW** |
+| TL Backpressure in DL Rx | Hill Creek DL Rx must handle backpressure from TL (relevant for UCIe die-to-die) | **MEDIUM** |
+| DL-PL Interface (Appendix B) | Informative but useful for Hill Creek DL-PL integration | **LOW** |
+| Rapid Alignment Markers | Hill Creek PCS must support RAM generation and lock | **MEDIUM** |
+| PMA parallel symbol pair search | Hill Creek PMA must search 20 alignments in parallel | **LOW** |
+| Programmable DL Up->Fault delay | Hill Creek DL state machine needs configurable timer (0-10ms) | **LOW** |
+
+### 8.2 Combined Impact Summary
+
+| Category | Common Spec | DLPL Spec | Total |
+|----------|-------------|-----------|-------|
+| **Critical** | INC (10 commands, switch structures) | Link Resiliency | 2 |
+| **High** | Collective Security, TBD sections | Link Folding, DL-PL Interface | 4 |
+| **Medium** | Multi-path security, PCRC | Link Width Negotiation, TL Backpressure, RAMs | 5 |
+| **Low** | Typos, latency goals | Tx Ready, PMA parallel search, DL delay timer | 4 |
+
+---
+
+## 9. Risk Summary
 
 | Priority | Finding | Category | Impact |
 |----------|---------|----------|--------|
-| **P0** | C-2: Switch Requirements overview contradicts INC requirements | Spec Consistency | Implementor confusion |
-| **P0** | F-5.1: Reproducibility section TBD | Numerical Correctness | Non-deterministic AI results |
-| **P0** | F-5.2: Rounding Modes section TBD | Protocol Completeness | ReadReduce semantics undefined |
-| **P1** | F-3.5.2: Block Collective Control Block format not finalized | Protocol Completeness | Cannot implement Block Collectives |
-| **P1** | F-3.6.1: Companion DL/PL specs not reviewed | Spec Completeness | Cannot verify DL/PL alignment |
-| **P1** | F-3.8.1: Collective security adds major switch requirements | Security | Switch must implement Accel-Switch link protection |
-| **P2** | F-3.1.2: Naming change from "200" to "Common" | Versioning | Potential confusion with v1.0 references |
-| **P2** | C-3: Typo in Section 9.8 | Draft Quality | Minor |
-| **P2** | F-3.9.2: Latency goals don't address INC operations | Performance | Unclear latency expectations for collectives |
+| **P0** | C-1: Switch Requirements contradicts INC | Spec Consistency | Implementor confusion |
+| **P0** | F-5.1 (prior): Reproducibility TBD | Numerical Correctness | Non-deterministic AI results |
+| **P0** | F-5.2 (prior): Rounding Modes TBD | Protocol Completeness | ReadReduce undefined |
+| **P1** | F-3.5.1: Link Resiliency major DL architecture change | Implementation | Significant Hill Creek rework |
+| **P1** | F-3.6.1: Link Folding < 250us power-up target | Implementation | Aggressive timing requirement |
+| **P1** | F-4.3.2: RAMs require new PCS alignment logic | Implementation | New PCS feature |
+| **P1** | F-3.4.1: TL Backpressure in DL Rx | Implementation | Required for UCIe chiplet |
+| **P2** | C-3: Broken cross-reference in DLPL 2.7.1.5 | Draft Quality | Minor |
+| **P2** | C-4: ToC numbering errors in DLPL | Draft Quality | Minor |
+| **P2** | F-7.1: Common spec less mature than DLPL | Spec Maturity | Common is v0.9 Draft vs DLPL RC |
 
 ---
 
-## 8. Recommendations
+## 10. Recommendations
 
 ### For Specification Authors (UALink Consortium)
 
-1. **Resolve C-2:** Update Section 9.1 (Switch Requirements Overview) to acknowledge that switches supporting INC must decode collective command types and maintain collective state. Consider adding a "Switch INC Requirements" subsection to Chapter 9.
-
-2. **Complete TBD Sections:** Prioritize Sections 6.5 (Reproducibility) and 6.6 (Rounding Modes) — these are blocking for INC implementation.
-
-3. **Finalize Block Collective Control Block:** Remove TBD markers from Section 6.3.7 and validate all parameter definitions.
-
-4. **Add INC Latency Goals:** Extend Section 9.9.2 to include latency goals for Collective Primitive and Block Collective operations.
-
-5. **Fix Typo:** Section 9.8, line 5167 — remove "jjjjjjjjjjjjjjjjjj".
+1. **Fix C-1:** Update Common Section 9.1 to acknowledge INC switch requirements.
+2. **Complete Common TBDs:** Sections 6.5 (Reproducibility) and 6.6 (Rounding Modes) are blocking.
+3. **Fix C-3:** Update DLPL Section 2.7.1.5 cross-reference from "6.4.3.3" to "2.4.3.3".
+4. **Fix C-4:** Correct Table of Contents numbering in DLPL.
+5. **Fix C-2:** Remove typo in Common Section 9.8.
 
 ### For LNR Switch Implementation (Cornelis Networks)
 
-6. **Validate CE Architecture Against v1.5 INC:** Confirm that the LNR Collectives Engine architecture supports the specific Collective Primitive and Block Collective flows defined in Chapter 6, including Group Table structure, response reduction logic, and Block Collective Control Block Queue.
-
-7. **Plan for New Command Encodings:** Update Rpipe and TL pack/unpack logic to handle the 10 new command encodings.
-
-8. **Assess Collective Security Impact:** The new Section 8.6 requirements for Accelerator-Switch link protection during collectives may require additional encryption/decryption engines or key management logic in the switch.
-
-9. **Obtain Companion DL/PL Specs:** Request the separate DL and PL specifications referenced by the v1.5 Common spec to ensure alignment with the LNR Hill Creek implementation.
+6. **Prioritize Link Resiliency assessment:** This is the most architecturally significant DLPL change. Evaluate Hill Creek MAC/DL architecture for 2-PL bonding, TDM, and reordering support.
+7. **Assess Link Folding feasibility:** Determine if Hill Creek SerDes supports < 250us power-up without AN/LT re-run. Evaluate DL PwrDn state machine integration.
+8. **Plan for RAM support in PCS:** Rapid Alignment Markers require new PCS logic for generation, lock, and transition to AM lock.
+9. **Validate TL Backpressure path:** If LNR uses UCIe die-to-die (confirmed in HAS), the TL backpressure handling in DL Rx is mandatory.
+10. **Track Common spec maturity:** The Common spec (v0.9 Draft) is less mature than the DLPL spec (RC). Monitor for changes in INC, Security, and Switch Requirements chapters before finalizing implementation.
 
 ---
 
-## 9. Conclusion
+## 11. Conclusion
 
-The UALink Common Specification Draft Rev 1.5 v0.9 represents a **transformative evolution** from UALink_200 Rev 1.0. The addition of In-Network Collectives fundamentally changes the role of the UALink switch from a passive packet relay to an active compute participant. This aligns with the industry trend toward offloading collective communication operations to network hardware for AI/ML workloads.
+The v1.5 specification suite represents a **substantial evolution** from v1.0 across both the protocol layer (Common spec) and the link/physical layer (DLPL spec).
 
-The core protocol (UPLI, TL, addressing, coherency) remains **backward compatible** — all v1.0 command encodings are preserved, and the new commands use previously reserved encoding space. However, v1.5-compliant switches must implement substantially more hardware (Group Tables, INC Engines, Control Block Queues) than v1.0-compliant switches.
+**Common Spec** adds In-Network Collectives as the headline feature, transforming the switch from a passive relay to an active compute participant. This is the most impactful change for switch ASIC architecture.
 
-The v1.5 Draft is **approximately 85% complete**, with critical TBD sections in Reproducibility, Rounding Modes, and Block Collective Control Block format. The separation of DL/PL into companion specifications is a clean architectural decision but requires those companion specs to be available and version-aligned.
+**DLPL Spec** adds Link Resiliency and Link Folding as the headline features, enabling fault-tolerant operation and power management at the link level. These features add significant complexity to the DL state machine (new DL PwrDn state, per-PL "sub" state machines, reordering logic) and PCS (Rapid Alignment Markers, parallel symbol pair search).
 
-**For the LNR Switch:** The existing Collectives Engine architecture in the LNR HAS Rev 0.3 provides a strong foundation for v1.5 INC compliance, but specific validation against the Chapter 6 requirements is needed, particularly for Block Collective Control Block Queue management and the new collective security requirements in Section 8.6.
+The core protocol parameters (DL Flit size, TL Flit size, CRC, sequence numbering, FEC, SerDes rates) are **unchanged**, ensuring backward compatibility at the physical and data link layers. All new features are additive.
+
+For the LNR Switch, the combined impact of INC (from Common) and Link Resiliency/Folding (from DLPL) represents the two largest implementation efforts. The DLPL changes primarily affect the Hill Creek MAC/PCS IP, while the Common changes primarily affect the LNR switch core (Rpipe, Collectives Engine, security pipeline).
 
 ---
 
-*End of Crosscheck Review Report*
+*End of Full Crosscheck Review Report*
