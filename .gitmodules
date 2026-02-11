@@ -4,3 +4,6 @@
 [submodule "hlc"]
 	path = hlc
 	url = git@github.com:cornelisnetworks/hlc.git
+[submodule "lnr"]
+	path = lnr
+	url = git@github.com:cornelisnetworks/lnr.git
