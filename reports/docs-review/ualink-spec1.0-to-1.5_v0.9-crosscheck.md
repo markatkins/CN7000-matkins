@@ -1,5 +1,43 @@
 # Full Crosscheck Review Report: UALink200 v1.0 Final vs. UALink v1.5 (Common + DLPL 200G)
 
+## Table of Contents
+
+- [Document Information](#document-information)
+- [1. Executive Summary](#1-executive-summary)
+  - [Key Findings](#key-findings)
+  - [Overall Assessment](#overall-assessment)
+- [2. Specification Structure: v1.0 (Monolithic) vs. v1.5 (Split)](#2-specification-structure-v10-monolithic-vs-v15-split)
+  - [2.1 Document Mapping](#21-document-mapping)
+  - [2.2 DLPL Revision History](#22-dlpl-revision-history)
+- [3. Data Link Layer Changes (DLPL Chapter 2 vs. v1.0 Chapter 6)](#3-data-link-layer-changes-dlpl-chapter-2-vs-v10-chapter-6)
+  - [3.1 Core DL Parameters — Unchanged](#31-core-dl-parameters--unchanged)
+  - [3.2 DL Link States — NEW: DL PwrDn](#32-dl-link-states--new-dl-pwrdn)
+  - [3.3 DL Messages — NEW: Link Width Negotiation, Tx Ready Notification](#33-dl-messages--new-link-width-negotiation-tx-ready-notification)
+  - [3.4 Link Level Replay — MODIFIED](#34-link-level-replay--modified)
+  - [3.5 Link Resiliency — ENTIRELY NEW (Section 2.8)](#35-link-resiliency--entirely-new-section-28)
+  - [3.6 Link Folding — ENTIRELY NEW (Section 2.9)](#36-link-folding--entirely-new-section-29)
+  - [3.7 DL-PL Interface — ENTIRELY NEW (Appendix B)](#37-dl-pl-interface--entirely-new-appendix-b)
+- [4. Physical Layer Changes (DLPL Chapter 3 vs. v1.0 Chapter 7)](#4-physical-layer-changes-dlpl-chapter-3-vs-v10-chapter-7)
+  - [4.1 Core PL Parameters — Unchanged](#41-core-pl-parameters--unchanged)
+  - [4.2 Supported Rates and Clauses — Unchanged](#42-supported-rates-and-clauses--unchanged)
+  - [4.3 RS Changes — NEW Features](#43-rs-changes--new-features)
+  - [4.4 PCS Changes](#44-pcs-changes)
+  - [4.5 Link Resiliency at PL Level (Section 3.8)](#45-link-resiliency-at-pl-level-section-38)
+- [5. Common Spec Changes (Summary — from prior review)](#5-common-spec-changes-summary--from-prior-review)
+  - [5.1 In-Network Collectives (Chapter 6) — ENTIRELY NEW](#51-in-network-collectives-chapter-6--entirely-new)
+  - [5.2 Security Enhancements (Chapter 8)](#52-security-enhancements-chapter-8)
+  - [5.3 Switch Requirements (Chapter 9)](#53-switch-requirements-chapter-9)
+- [6. Contradictions and Inconsistencies](#6-contradictions-and-inconsistencies)
+- [7. TBD / Incomplete Sections](#7-tbd--incomplete-sections)
+- [8. Impact Assessment for LNR Switch Implementation](#8-impact-assessment-for-lnr-switch-implementation)
+  - [8.1 DLPL-Specific Impacts](#81-dlpl-specific-impacts)
+  - [8.2 Combined Impact Summary](#82-combined-impact-summary)
+- [9. Risk Summary](#9-risk-summary)
+- [10. Recommendations](#10-recommendations)
+- [11. Conclusion](#11-conclusion)
+
+---
+
 ## Document Information
 
 | Field | Value |
