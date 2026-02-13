@@ -359,8 +359,8 @@ Three explore agents completed deep analysis during the initial planning session
 |--------|------|-------------|
 | UALink v1.0-to-1.5 Crosscheck (Common-only) | `reports/docs-review/ualink-spec1.0-to-1.5_v0.9-crosscheck.md` | Predecessor — Common spec only, superseded by full crosscheck |
 | UALink HAS Crosscheck | `reports/docs-review/ualink-has-crosscheck.md` | Related — HAS alignment review |
-| UALink Technical Report | `reports/packet_taxonomy/technical_report_ualink.yaml` | Current state — documents existing 38 KSY files |
-| Status Report | `reports/packet_taxonomy/status_report.yaml` | Overall project status — W-14 series covers UALink expansion |
+| UALink Technical Report | `reports/packet_taxonomy/technical_report/technical_report_ualink.yaml` | Current state — documents existing 38 KSY files |
+| Status Report | `reports/packet_taxonomy/status_report/status_report.yaml` | Overall project status — W-14 series covers UALink expansion |
 
 ---
 

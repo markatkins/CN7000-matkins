@@ -634,8 +634,8 @@ This includes:
 Generated comprehensive status report covering all packet taxonomy work from 2026-01-10 to 2026-02-03.
 
 **Deliverables**:
-- `reports/packet_taxonomy/status_report.yaml` - YAML data file (182 lines)
-- `reports/packet_taxonomy/status_report.pptx` - PowerPoint presentation (22 slides)
+- `reports/packet_taxonomy/status_report/status_report.yaml` - YAML data file (182 lines)
+- `reports/packet_taxonomy/status_report/status_report.pptx` - PowerPoint presentation (22 slides)
 
 **Report Contents**:
 - Executive summary with 94% completion rate (83 closed, 5 open, 13 deferred)
@@ -647,4 +647,4 @@ Generated comprehensive status report covering all packet taxonomy work from 202
 - Non-protocol file changes
 - Next steps and recommendations
 
-**Generation**: `python -m utilities.pptx_helper --type progress --data reports/packet_taxonomy/status_report.yaml --output reports/packet_taxonomy/status_report.pptx`
+**Generation**: `python -m utilities.pptx_helper --type progress --data reports/packet_taxonomy/status_report/status_report.yaml --output reports/packet_taxonomy/status_report/status_report.pptx`
